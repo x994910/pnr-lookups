@@ -1,0 +1,54 @@
+2|A - Generic Asylum
+38|A1 - Iranian Asylum seekers
+39|A2 - Boarding pass swap
+10|A3 - Roma Asylum seekers
+36|A4 - Bahrain Asylum seekers
+40|A5 - Saudi Asylum Seeker
+41|A6 - Transit passenger using Indonesian passport
+46|A7 - KW Article 17 ppt
+47|A8 - Asylum seeker using fraudulent Malaysian passport
+37|A9 - Sri Lankan impostors with altered passports
+54|A10 - Altered Kuwait passports
+59|A11 - Turkish Asylum Seekers
+60|A12 - Kuwait asylum seeker
+3|B - Generic non genuine visitor - visa waiver
+7|B1 - MY non genuine visitor
+70|B1 - MY non genuine visitor (SiHulk)
+26|B2 - BR non genuine visitor
+16|B3 - MX non genuine visitor
+17|B4 - KR non genuine visitor
+18|B5 - Irish & UK travellers
+19|B6 - Card skimmer
+25|B7 - Eastern European non genuine visitor
+22|B8 - HK & MO illegal sex worker
+20|B9 - KR illegal sex worker
+28|B10 - MY illegal sex worker
+31|B11 - PRC illegal sex worker
+32|B12 - PRC non genuine student
+21|B13 - Credit card fraud airline tickets
+27|B14 - Known or suspected facilitator escort smuggler
+30|B15 - HK non genuine visitor (male)
+33|B16 - TW non genuine visitor
+34|B17 - Non genuine APEC card holder
+35|B18 - SA non genuine visitor
+29|B19 - TW illegal sex worker
+23|B20 - BG non genuine visitor
+24|B21 - RO non genuine visitor
+50|B22 - FJ non genuine visitor
+49|B23 - Generic non genuine visitor - visa required
+51|B24 - IL non genuine visitor
+53|B25 - South Asian non genuine student
+55|B26 - AR or CL or UY non-genuine visitor
+56|B27 - BR Illegal Sex Worker
+62|B28 - Malaysian Construction Workers
+63|B29 - Chinese Non-Genuine Visitor (Visa Fraud)
+66|B30 - Vietnamese Smuggled Illegal Workers
+68|B31 - Indonesian non genuine visitor
+69|B32 - Trafficking in persons
+45|C - Counterfeit & Fraudulent Passport (generic)
+11|C1 - Fraudulent (obtained/counterfeit) MX passport
+12|C2 - PRC national using visa waiver passport
+61|N1 - Terrorism
+64|X1 - Work visa holder - non compliant
+65|X2 - Student visa holder - non compliant
+67|Z1 - Coronavirus

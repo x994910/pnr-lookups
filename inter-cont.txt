@@ -1,4 +1,4 @@
-Interdiction Port, Airline, Airline Name, To, CC
+Interdiction_Port, Airline_Code, Airline_Name, To, CC
 APW, NZ, Air New Zealand, Samantha.ImoMunif@airnz.co.nz; Sene.Taala@airnz.co.nz; asefo1957@gmail.com; !APWAirportOperations@airnz.co.nz
 APW, FJ, Fiji Airways, zoheb.shah@fijiairways.com; manuia.leuii@fijiairways.com
 ADL, NZ, Air New Zealand, Airnz.adl@swissport.com.au; M.SIMS@swissport.com.au; amer.gacanovic@airnz.co.nz

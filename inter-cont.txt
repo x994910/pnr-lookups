@@ -1,0 +1,135 @@
+Interdiction Port, Airline, To, CC
+APW, NZ, Samantha.ImoMunif@airnz.co.nz; Sene.Taala@airnz.co.nz; asefo1957@gmail.com; !APWAirportOperations@airnz.co.nz
+APW, FJ, zoheb.shah@fijiairways.com; manuia.leuii@fijiairways.com
+ADL, NZ, Airnz.adl@swissport.com.au; M.SIMS@swissport.com.au; amer.gacanovic@airnz.co.nz
+ADL, JQ, Josh.Wade@jetstar.com; #DL-ADLADM@jetstar.com
+ADL, QF, aptfacilitation@qantas.com.au
+ADL, QF, adlkkqr@au.qatarairways.com; adl.ops@johnmenzies.aero
+AUH, EY, LMathias@etihad.ae; RegulatoryCompliance@etihad.ae; MajidAlAmeri@etihad.ae; fabohiaja@etihad.ae
+BKK, TG, ko.fltmanager@thaiairways.com; ko.manager@thaiairways.com; bkkko.inspector@thaiairways.com, aklkktg@thaiairways.co.nz
+BKK, EK, bkkapt@emirates.com
+BKK, CX, DL_BKK_Airport_Leaders@cathaypacific.com; BKK8APT@cathaypacific.com; phattariya_takaew@cathaypacific.com
+BNE, NZ, BNE-AirportOpsManagers@airnz.co.nz; alexandra.mcmartin@airnz.co.nz; bne-airportopsmanagers@airnz.co.nz; ~airnz.bne@swissport.com.au
+BNE, QF, DG-DCEBNECSCSS@qantas.com.au
+BNE, JQ, Craig.Jenkins@jetstar.com; #DLBNETAM@jetstar.com; #DLBNETAMRelief@jetstar.com; jetstar.bne@swissport.com.au
+BNE, CI, chun-hui.chiu@china-airlines.com; natalie.chen@china-airlines.com; tina.chen@china-airlines.com; andy.lin@china-airlines.com; lucy.luk@china-airlines.com; cindy.chen@china-airlines.com
+BNE, VA, csdbnecustomerexperiencemanagers@virginaustralia.com; Lisa.ailuai@virginaustralia.com
+BOM, SQ, BOM_Traffic@singaporeair.com.sg; BOM_Baggage@singaporeair.com.sg; Genevieve_Morais@Singaporeair.com.sg
+BWN, BI, Controller@rba.com.bn
+CAN, CZ, nhzz@csair.com; apis@csair.com; wangsui@csair.com; Murphy@csair.co.nz; aklairport@csair.com
+CGK, QF, Niluh.Witari@jetstar.com
+CGK, JQ, Niluh.Witari@jetstar.com
+TSN, HU, thdfgjzj@tianjin-air.com; Yaqi-duan@hnair.com; Yuheng-sun@hnair.com
+TSN, GS, thdfgjzj@tianjin-air.com; Yaqi-duan@hnair.com; Yuheng-sun@hnair.com
+CKG, HU, xbgjswdbx@hnair.com; li-jian1@tianjin-air.com
+CKG, GS, xbgjswdbx@hnair.com; li-jian1@tianjin-air.com
+CMB, SQ, Vasantha_k@singaporeair.com.sg; Kasun_Weligamage@Singaporeair.com.sg
+CMB, D7, maa_cmb@airasia.com; nimeshamarasinghe@airasia.com
+CMB, UL, duty.airport.manager@srilankan.com; ulscdu@srilankan.com
+CNS, QF, DG-DCECNSADM@qantas.com.au; CNSOPS@qantas.com.au; CNSCSO@qantas.com.au
+CNS, JQ, #DLCNSTAM@jetstar.com; #DL-CNSTAMRelief@jetstar.com
+CNS, NZ, airnz.cns@airnz.co.nz; Ja.lewis@swissport.com.au; airnz.cns@swissport.com.au
+CTU, 3U, scalinter@qq.com; 3179381067@qq.com
+TFU, 3U, 3179381067@qq.com; Akl_station@sichuanair.com
+DEL, SQ, Delhi_airport@singaporeair.com.sg, SATS_T3DMIC@sats.com.sg; SATS_T3DTOPS@sats.com.sg; SATSOCC_DSM@sats.com.sg; sinhub_mhc@singaporeair.com.sg; sinhub_shm@singaporeair.com.sg; vish_palanivelu@singaporeair.com.sg
+DEL, MH, Saurabh.chanda01@malaysiaairlines.com; Gha.delhi@malaysiaairlines.com, delkdmh@malaysiaairlines.com; delkkmh@malaysiaairlines.com
+DFW, AA, security.operations@aa.com; sanjay.tiwari@aa.com; akeem.bolden@aa.com; tito.ortiz@aa.com; sharon.viera@aa.com; jorge.gomez.nisino@aa.com
+DOH, QR, qrsecurity@qatarairways.com.qa; qrsecdutymgr@qatarairways.com.qa; qrsecurityioc@qatarairways.com.qa, Mazeem@qatarairways.com.qa; Sgunaratna@qatarairways.com.qa; *immigrationALO_DXB@mbie.govt.nz
+DPS, NZ, Citra.Ratnaningsih@airnz.co.nz; DPSAirport@airnz.co.nz; Agus.Wiranata@airnz.co.nz
+DPS, QF, ticketing.dps@ptjas.co.id
+DPS, EK, GroupSecurityDutyOfficersEK-Airport@emirates.com; DPSAPT@emirates.com; imade.putra@emirates.com; DPSAPT@emirates.com; ops.bali@ptjas.co.id; ek.ambassadordps@ptjas.co.id
+DXB, EK, GroupSecurityDutyOfficersEKAPT@emirates.com; matin.ali@emirates.com; roberto.santiago@emirates.com; jacob.rajan@emirates.com; GroupSecurityDutyOfficersEKAirport@emirates.com; GroupSecurityDutyOfficersEKApt@emirates.com; jacob.rajan@emirates.com; alireza.tehrani@emirates.com; roberto.santiago@emirates.com, Jesse.Evenblij@mbie.govt.nz; NZALODubai@mbie.govt.nz
+EZE, NZ, patricia.peirone@crossracer.aero; mariana.zadra@crossracer.aero; Christian.DeLaFuente@airnz.com; Pilar.Perez@airnz.co.nz; ezeticketing@crossracer.aero; pablo.caviglia@crossracer.aero
+EZE, MU, Sunzhen@ceair.com; Camila.guerra@crossracer.aero; Pilar.garcia@crossracer.aero
+HBA, NZ, airnz.hba@swissport.com.au; d.stevens@swissport.com.au; charlene.watson@airnz.co.nz
+HGH, MU, P_HGHDFSD@ceair.com; p_hghdfjl@ceair.com; xumin19@ceair.com; qihuaqi@ceair.com; chenya5@ceair.com; qiuchundong@ceair.com; lvlei@ceair.com; yangqing22@ceair.com
+HKG, CX, sec8ops@cathaypacific.com; sec8mod@cathaypacific.com; apt8abs@cathaypacific.com; apt8svd@cathaypacific.com, Richard.Wilson@mbie.govt.nz; NZALOHongKong@mbie.govt.nz
+HKG, NZ, hkgairport2@airnz.co.nz, Richard.Wilson@mbie.govt.nz; NZALOHongKong@mbie.govt.nz
+HKG, HX, dutydesk@hagsl.com; dutydesk.akl@hkairlines.com; security.hx@hkairlines.com; Ops.DM@hagsl.com; Ops.CSDM@hagsl.com, Richard.Wilson@mbie.govt.nz; NZALOHongKong@mbie.govt.nz
+HKG, FJ, watsonseeto@airpacific.com.fj, Richard.Wilson@mbie.govt.nz; NZALOHongKong@mbie.govt.nz
+HND, QF, ICE-HNDDAM@qantas.com.au
+HND, NZ, hndnz@anaas.ana-g.com; masanori.tamura@airnz.co.jp; jack.suzuki@airnz.co.jp
+HNL, HA, intl.facilitation@alaskaair.com; CSMgmt-HNLOPS@hawaiianair.com
+HNL, NZ, Randal.yoshimura@airnz.com; ross.yamanuha@airnz.com
+IAH, NZ, iahco@airnz.com; erika.rodriguez@airnz.co; tom.trapp@airnz.com; hafiz.yousif@airnz.com; iahmgrs@airnz.co.nz
+ICN, NZ, Kiho.Kim@airnz.co.nz; Suhye.kang@airnz.co.nz; jiyoung.jung@swissport.com
+ICN, KE, ICNKKD@koreanair.com; ICNKKI@koreanair.com
+IST, SQ, gsd_ist@singaporeair.com.sg
+JFK, QF, customerjourney@qantas.com.au; cjdm@qantas.com.au; #SITSUPERVISORS@qantas.com.au; DGDCESYDACEM@qantas.com.au; mario.diogo@qantas.com.au; oscar.yiu@qantas.com.au
+JNB, QF, cchristodoulou@qantas.com.au; jkok@qantas.com.au; ikypuros@qantas.com.au; nicoletteherodotou@qantas.com.au; Michellevanwyk@qantas.com.au
+JNB, EK, valette.powles@emirates.com; jnbapt@emirates.com
+KIX, NZ, toshi.watanabe@airnz.co.jp; Jiro.suzuki@airnz.co.jp
+KUL, MH, kulklmh@malaysiaairlines.com; kulk1mh@malaysiaairlines.com; kulkpmh@malaysiaairlines.com; adshcc@malaysiaairlines.com, aibee.choo@malaysiaairlines.com; joanne.vanderburgh@malaysiaairlines.com; taavao.leilua@malaysiaairlines.com; airportservices.mab@malaysiaairlines.com; aklkdmh@malaysiaairlines.com; mahesh.gunathilaka@malaysiaairlines.com; Bree.Rodgers@mbie.govt.nz; NZALOKualaLumpur@mbie.govt.nz
+KUL, D7, Jeganathans@airasia.com; Zulmuhaiminroslan@airasia.com; Muhammadredham@airasia.com; maa_security_officer@airasia.com; aax_security_profiling@airasia.com; aax_ops_kul@airasia.com, Bree.Rodgers@mbie.govt.nz; NZALOKualaLumpur@mbie.govt.nz
+KUL, ID, kulkpod@batikair.com.my; kultd@batikair.com.my; ariff.aziz@batikair.com.my; venkatesh.sakthivadivel@batikair.com.my; changiskhan@batikair.com.my; aliff.bakar@batikair.com.my; aliffabdulaziz@batikair.com.my; natasha.samsudin@batikair.com.my, Bree.Rodgers@mbie.govt.nz; NZALOKualaLumpur@mbie.govt.nz
+KUL, EK, kulapt@emirates.com, Bree.Rodgers@mbie.govt.nz; NZALOKualaLumpur@mbie.govt.nz
+LAX, NZ, LAXCO@airnz.com
+LAX, AA, security.operations@aa.com; DL_LAX_Pax_MOD@aa.com; kimberlin.gustaferro@aa.com; zakariah.rakrouki@aa.com; sanjay.tiwari@aa.com
+LAX, QF, #laxdam@qantas.com.au; alex.taberner@qantas.com.au
+LAX, UA, 24x7securitydesk@united.com
+LAX, DL, Securitydesk.OCC@delta.com; Globalassist@delta.com
+LHR, AC, DutyCoord-LHR@aircanada.ca; Jo.Sinclair@menziesaviation.com; LHR.T2DM@menziesaviation.com
+LHR, CX, DL_LHR_AIRPORT_LEADERS@cathaypacific.com
+LHR, EK, geovanna.celani@emirates.com; hussain.darwish@emirates.com; jason.mcveigh@emirates.com; sarah.gregory@emirates.com; Mancsv.tsl@dnata
+LHR, EY, lhrairport@etihad.ae; Etihad.leads@cobaltgs.com
+LHR, KE, lhrkk@koreanair.com
+LHR, LH, secdesk@dlh.de
+LHR, MH, mahadi.mohdbakri@malaysiaairlines.com; suzette.imeldabrainard@malaysiaairlines.com; salim.akhtar@malaysiaairlines.com; ranjit.singhsandhu@malaysiaairlines.com; abhalim.abdullah@malaysiaairlines.com; zurina.kader@malaysiaairlines.com
+LHR, QF, lhrdam@qantas.com.au; lhr.qf-spvr@menziesaviation.com
+LHR, QR, QR.supervisor@cobaltgs.com; lhrticketdesk@uk.qatarairways.com
+LHR, SQ, LHRT2.CSVSupervisor@dnata.co.uk
+LHR, TG, lhrtraffictg@thaiairways.co.uk; lhrocc@azzurralhr.it
+LHR, UA, marisa.villanueva@united.com
+LHR, VS, LHR.customer.service.supervisor@fly.virgin.com
+LHR, CA, LHR@AIRCHINA.COM; wangzhi@airchina.com
+MCT, WY, documentcheckers@omanair.com; duty.officer@omainair.com
+MCT, EK, mctapt@emirates.com
+MCY, NZ, psmmcy@swissport.com.au; ho.mitchell@swissport.com.au; airnz.mcy@swissport.com.au
+MEL, NZ, MelOpsManagers2@airnz.co.nz; airnz.mel@swissport.com.au; meldops@airnz.co.nz
+MEL, QF, DSG-DCEMELCSCSS@Qantas.com.au; DG-DCEMELCSCSS@qantas.com.au; customerjourney@qantas.com.au
+MEL, JQ, dl-meltamrelief@jetstar.com; #dl-meltam@jetstar.com
+MEL, SQ, MELKOSQ@singaporeair.com.sg, GSD_MEL@singaporeair.com.sg; Nathan_Bloomfield@singaporeair.com.sg
+MEL, VA, csdmelcustomerexperiencemanagers@virginaustralia.com; Newton.Desouza@virginaustralia.com
+MNL, PR, asm_cbs@pal.com.ph; crot1@pal.com.ph; sonny_pascual@pal.com.ph; jackie_fontanilla@pal.com.ph; gisela.baron@mascorp.ph; van_limtong@pal.com.ph; danny_gruba@pal.com.ph; pam.david@mascorp.ph; neilmar.ventanilla@mascorp.ph; prmacro@mascorp.ph; palcodesharet1@mascorph.ph; sonny_pablo@pal.com.ph; reyvee_valencia@pal.com.ph; cronw@pal.com.ph; T2_intl@pal.com.ph
+NAN, FJ, CSDM.NAN@fijiairways.com; CSA.NAN@Fijiairways.com; fjauckland.airport@fijiairways.com, *ImmigrationALO_NAN@mbie.govt.nz
+NAN, NZ, !AOM'sNADI@airnz.co.nz, *ImmigrationALO_NAN@mbie.govt.nz
+NOU, NZ, axxessairport@axxesstravel.net
+NOU, SB, aptdutymgr@aircalin.nc; rita.nathan@aircalin.co.nz
+NRT, NZ, JapanNRTAirport@airnz.co.nz
+OOL, NZ, airnz.ool@swissport.com.au
+OOL, JQ, #DL-OOLTAM@jetstar.com; #dl-ooltamrelief@jetstar.com
+OOL, D7, Loganhowe@airasia.com
+PEK, CA, lkfwyk@airchina.com, zhangfang01@airchina.com; aklapca@airchina.com
+PEK, CX, DL_PEK_Airport_Leaders@cathaypacific.com
+PER, JQ, Kathryn.Weeks@menziesaviation.com
+PER, ID, Padmanathan.arumugam@batikair.com.my; Carli.morris@batikair.com.my
+PER, NZ, amer.gacanovic@airnz.co.nz; perairportopsmanager@airnz.co.nz
+PPT, TN, isabelle.verbauwen@airtahitinui.pf; pptstation@airtahitinui.pf
+PPT, NZ, Katia.Lentchitzky@airnz.co.nz; pptairportmanagement@airnz.co.nz
+PVG, MU, wzzc1@ceair.com; pvgkcmu@ceair.com; yaofeng@ceair.com; blli@ceair.com; likan@ceair.com; xuweiming@ceair.com
+PVG, NZ, Michel.Huang@airnz.co.nz; PVGAptCustomerService@airnz.co.nz
+PVG, CX, DL_PVG_Airport_Leaders@cathaypacific.com
+RAR, NZ, Maeva.TuaTrood@airnz.co.nz; Paulina.Beddoes@airnz.co.nz; Mark.Boyd@airnz.co.nz; Myrna.Kermode@airnz.co.nz; Addrienne.Hosking-Tinirau@airnz.co.nz
+SCL, LA, controlseg@latam.com
+SFO, UA, 24x7securitydesk@united.com
+SFO, FJ, BonnieLi@hallmark-aviation.com
+SFO, NZ, servisairsfo@airnz.com; Brenda.diazarevalo@airnz.com; arturo.hernandez@airnz.com; justin.jiang@airnz.co
+SIN, SQ, SATS_T3DMIC@sats.com.sg; SATS_T3OpsMgr@sats.com.sg; sinhub_mhc@singaporeair.com.sg; sinhub_shm@singaporeair.com.sg, *ImmigrationALO_SIN@mbie.govt.nz  
+SIN, NZ, satsocc_dsm@sats.com.sg; sinairport@airnz.co.nz, benson.chua@airnz.co.nz; *ImmigrationALO_SIN@mbie.govt.nz
+SIN, EK, sinapt@emirates.com; Gilbert.Chia@emirates.com, *ImmigrationALO_SIN@mbie.govt.nz
+SYD, NZ, jenny.gavigan@airnz.co.nz; !SYD-AirportOpsManagers@airnz.co.nz; maria.psomas1@airnz.co.nz; rafik.helou@airnz.co.nz; natalie.hernandez@airnz.co.nz; carla.miller@airnz.co.nz; miku.reed@airnz.co.nz; annelise.gavrielatos@airnz.co.nz; Dane.Lovell@airnz.co.nz; david.aloi@dnata.com.au; syd.gs.sdm@dnata.com.au; syd.nz.servicedesk@dnata.com.au
+SYD, D7, davidstephenson@airasia.com; aax_ops_syd@airasia.com
+SYD, QF, DGDCESYDACEM@qantas.com.au; #SITSUPERVISORS@qantas.com.au
+SYD, LA, Sebastian.vago@latam.com; juanpablo.manjarres@latam.com; Roberto.serafini@dnata.com.au; Jaime.guajardo@dnata.com.au; renato.berutti@latam.com 
+SYD, JQ, Nathan.Allaries@jetstar.com; DL-SYDTAM@jetstar.com; DL-SYDTAM@jetstar.com
+SYD, EK, sydapt@emirates.com
+SYD, CI, che-shih.huang@china-airlines.com; alex_chen@china-airlines.com
+SYD, MH, Edwine.raj@malaysiaairlines.com; Marora.marama@malaysiaairlines.com; Cineritta.mareko@malaysiaairlines.com
+SYD, VA, csdsydcustomerexperiencemanagers@virginaustralia.com; kylie.downing@virginaustralia.com
+SZX, HU, szdmyws@hnair.com, szx_dmfws@hnair.com; dfzbjl@hnair.com
+TBU, NZ, filisonim.vuni@airnz.co.nz; roseanne.denton@airnz.co.nz
+TPE, NZ, evaoic@evaair.com; joy.chen@airnz.co.nz; Richard.Chiu@airnz.co.nz; TAO@evaair.com; Peifen.Tai@airnz.co.nz; Richard.Chiu@airnz.co.nz
+TPE, CI, UHD@cal.aero, tpekkci@china-airlines.com; tpekkci@yahoo.com.tw; dragon@china-airlines.com; tpepccbox@china-airlines.com
+VLI, IE, etapuika@flysolomons.com; oodogari@flysolomons.com; nz.app@flysolomons.com.sb
+YVR, NZ, yvrsup@airnz.co.nz
+YVR, AC, osc@aircanada.ca; shoghik.abrahamyan@aircanada.ca; Bianca.Colatruglio@aircanada.ca; pas.specialist@aircanada.ca; yulg3ac@aircanada.mconnect.aero

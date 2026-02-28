@@ -41,6 +41,7 @@ DPS, EK, Emirates, GroupSecurityDutyOfficersEK-Airport@emirates.com; DPSAPT@emir
 DXB, EK, Emirates, GroupSecurityDutyOfficersEKAPT@emirates.com; matin.ali@emirates.com; roberto.santiago@emirates.com; jacob.rajan@emirates.com; alireza.tehrani@emirates.com, Jesse.Evenblij@mbie.govt.nz; NZALODubai@mbie.govt.nz
 EZE, NZ, Air New Zealand, patricia.peirone@crossracer.aero; mariana.zadra@crossracer.aero; Christian.DeLaFuente@airnz.com; Pilar.Perez@airnz.co.nz; ezeticketing@crossracer.aero; pablo.caviglia@crossracer.aero
 EZE, MU, China Eastern Airlines, Sunzhen@ceair.com; Camila.guerra@crossracer.aero; Pilar.garcia@crossracer.aero
+HAK, HU, Hainan Airlines, hhzjs@hnair.com
 HBA, NZ, Air New Zealand, airnz.hba@swissport.com.au; d.stevens@swissport.com.au; charlene.watson@airnz.co.nz
 HGH, MU, China Eastern Airlines, P_HGHDFSD@ceair.com; p_hghdfjl@ceair.com; xumin19@ceair.com; qihuaqi@ceair.com; chenya5@ceair.com; qiuchundong@ceair.com; lvlei@ceair.com; yangqing22@ceair.com
 HKG, CX, Cathay Pacific, sec8ops@cathaypacific.com; sec8mod@cathaypacific.com; apt8abs@cathaypacific.com; apt8svd@cathaypacific.com, Richard.Wilson@mbie.govt.nz; NZALOHongKong@mbie.govt.nz

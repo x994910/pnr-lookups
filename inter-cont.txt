@@ -105,6 +105,7 @@ PEK, CX, Cathay Pacific, DL_PEK_Airport_Leaders@cathaypacific.com
 PER, JQ, Jetstar, Kathryn.Weeks@menziesaviation.com
 PER, ID, Batik Air, Padmanathan.arumugam@batikair.com.my; Carli.morris@batikair.com.my
 PER, NZ, Air New Zealand, amer.gacanovic@airnz.co.nz; perairportopsmanager@airnz.co.nz
+PER, QF, Qantas, DG-DCEPERCSCSS@qantas.com.au; DG-DCEPERACEM@qantas.com.au
 PPT, TN, Air Tahiti Nui, isabelle.verbauwen@airtahitinui.pf; pptstation@airtahitinui.pf
 PPT, NZ, Air New Zealand, Katia.Lentchitzky@airnz.co.nz; pptairportmanagement@airnz.co.nz
 PVG, MU, China Eastern Airlines, wzzc1@ceair.com; pvgkcmu@ceair.com; yaofeng@ceair.com; blli@ceair.com; likan@ceair.com; xuweiming@ceair.com

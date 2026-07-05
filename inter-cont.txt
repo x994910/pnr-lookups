@@ -92,8 +92,8 @@ MEL, JQ, Jetstar, dl-meltamrelief@jetstar.com; #dl-meltam@jetstar.com
 MEL, SQ, Singapore Airlines, MELKOSQ@singaporeair.com.sg; GSD_MEL@singaporeair.com.sg; Nathan_Bloomfield@singaporeair.com.sg
 MEL, VA, Virgin Australia, csdmelcustomerexperiencemanagers@virginaustralia.com; Newton.Desouza@virginaustralia.com
 MNL, PR, Philippine Airlines, asm_cbs@pal.com.ph; crot1@pal.com.ph; sonny_pascual@pal.com.ph; jackie_fontanilla@pal.com.ph; gisela.baron@mascorp.ph; van_limtong@pal.com.ph; danny_gruba@pal.com.ph; pam.david@mascorp.ph; neilmar.ventanilla@mascorp.ph; prmacro@mascorp.ph; palcodesharet1@mascorp.ph; sonny_pablo@pal.com.ph; reyvee_valencia@pal.com.ph; cronw@pal.com.ph; T2_intl@pal.com.ph
-NAN, FJ, Fiji Airways, CSDM.NAN@fijiairways.com; CSA.NAN@fijiairways.com; fjauckland.airport@fijiairways.com, *ImmigrationALO_NAN@mbie.govt.nz
-NAN, NZ, Air New Zealand, !AOM'sNADI@airnz.co.nz, *ImmigrationALO_NAN@mbie.govt.nz
+NAN, FJ, Fiji Airways, CSDM.NAN@fijiairways.com; CSA.NAN@fijiairways.com; fjauckland.airport@fijiairways.com, Meegan.sorenson@mbie.govt.nz
+NAN, NZ, Air New Zealand, NZNANAIRPORT@airnz.co.nz, Meegan.sorenson@mbie.govt.nz
 NOU, NZ, Air New Zealand, axxessairport@axxesstravel.net
 NOU, SB, Aircalin, aptdutymgr@aircalin.nc; rita.nathan@aircalin.co.nz
 NRT, NZ, Air New Zealand, JapanNRTAirport@airnz.co.nz

@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>MyPOI</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+html { font-size: clamp(0.85rem, 1.2vw, 1rem); }
+body {
+margin: 0; padding: 1rem;
+font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+line-height: 1.4; color: #111; background: #f4f4f4;
+}
+input, button, select, textarea { font: inherit; line-height: inherit; }
+
+.container { max-width: 960px; margin: 0 auto; display: grid; gap: 1rem; }
+fieldset { border: 1px solid #bbb; border-radius: 4px; padding: 1rem 1.25rem; background: #fff; }
+legend { padding: 0 0.25rem; font-weight: 700; }
+
+textarea{
+width:100%; min-height:220px; resize:vertical; box-sizing:border-box;
+background:#fff; color:#111; border:1px solid #bbb; border-radius:4px; padding:0.6rem 0.7rem;
+font: 13px/1.35 ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+.action-bar { display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap; margin-top:0.65rem; }
+.action-bar button { border:1px solid #bbb; background:#f3f3f3; padding:0.45rem 0.8rem; border-radius:4px; cursor:pointer; }
+.action-bar button:hover { background:#ececec; }
+
+/* POI button colour and visibility rules */
+#poi { background:#FCCC28; display:none; }
+#poi:hover { background:#FCCC28; }
+
+/* INTERDICTION button, only visible after POI click (controlled by JS) */
+#interdiction { display:none; background:#d7ecff; }
+#interdiction:hover { background:#cbe6ff; }
+
+/* Floating hover text that follows the mouse inside the button */
+.floating-tip{
+position: relative;
+overflow: visible;
+}
+.floating-tip::after{
+content: attr(data-tip);
+position: absolute;
+left: var(--tip-x, -9999px);
+top: var(--tip-y, -9999px);
+transform: translate(12px, 12px);
+background: rgba(17, 17, 17, 0.85);
+color: #fff;
+font-size: 0.8em;
+padding: 0.2rem 0.4rem;
+border-radius: 4px;
+white-space: nowrap;
+pointer-events: none;
+opacity: 0;
+transition: opacity 0.08s linear;
+z-index: 20;
+}
+.floating-tip.tip-on::after{
+opacity: 1;
+}
+
+/* Small status message near buttons */
+.status {
+font-size: 0.95em;
+color: #333;
+padding: 0.25rem 0.45rem;
+border-radius: 4px;
+background: #f7f7f7;
+border: 1px solid #ddd;
+display: none;
+}
+.status.ok { background: #eef8ef; border-color: #cfe9d1; color: #1e5f2b; }
+.status.bad { background: #fdeeee; border-color: #f2c7c7; color: #7a1e1e; }
+
+/* Passenger selector */
+#passengerBox { display:none; }
+.radio-list { display:grid; gap:0.35rem; margin-top:0.5rem; }
+.radio-item { display:flex; gap:0.5rem; align-items:center; padding:0.35rem 0.5rem; border:1px solid #ddd; border-radius:4px; background:#fafafa; }
+.radio-item:hover { background:#f3f3f3; }
+
+/* Panels */
+#personalBox { display:none; }
+#travelBox { display:none; }
+#bookingBox { display:none; }
+
+.form-grid { display:grid; gap:0.6rem; }
+.row4 { display:grid; grid-template-columns: 1fr 1.2fr 0.8fr 0.9fr; gap:0.6rem; }
+.row4b { display:grid; grid-template-columns: 0.9fr 1.2fr 1fr 1.2fr; gap:0.6rem; }
+.field { display:flex; flex-direction:column; gap:0.25rem; }
+.label { font-weight: 600; color:#333; }
+input[type="text"], select {
+width:100%; box-sizing:border-box;
+background:#fff; color:#111; border:1px solid #bbb; border-radius:4px; padding:0.45rem 0.55rem;
+}
+@media (max-width: 820px){
+.row4, .row4b { grid-template-columns: 1fr; }
+}
+
+/* Required label glow when the field is empty */
+.label.missing{
+color: #b00000;
+text-shadow: 0 0 6px rgba(255, 0, 0, 0.75), 0 0 12px rgba(255, 0, 0, 0.55);
+animation: redGlowPulse 1.2s ease-in-out infinite;
+}
+@keyframes redGlowPulse{
+0%, 100% { text-shadow: 0 0 6px rgba(255, 0, 0, 0.65), 0 0 12px rgba(255, 0, 0, 0.45); }
+50% { text-shadow: 0 0 10px rgba(255, 0, 0, 0.85), 0 0 18px rgba(255, 0, 0, 0.65); }
+}
+
+/* Interdiction e-mail fieldset */
+#interdictionEmailBox { display:none; }
+.email-header-line { margin: 0.25rem 0 0.75rem 0; color:#111; }
+.email-grid { display:grid; gap:0.6rem; }
+.email-row {
+display:grid;
+grid-template-columns: auto 1fr;
+gap: 0.6rem;
+align-items: center;
+}
+.email-row button {
+width: fit-content;
+border:1px solid #bbb;
+background:#f3f3f3;
+padding:0.35rem 0.7rem;
+border-radius:4px;
+cursor:pointer;
+}
+.email-row button:hover { background:#ececec; }
+.email-field {
+width:100%;
+box-sizing:border-box;
+border:1px solid #ccc;
+border-radius:4px;
+padding:0.45rem 0.55rem;
+background:#efefef;
+color:#555;
+}
+.email-actions { display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.4rem; }
+.email-actions button {
+border:1px solid #bbb;
+background:#f3f3f3;
+padding:0.45rem 0.8rem;
+border-radius:4px;
+cursor:pointer;
+}
+.email-actions button:hover { background:#ececec; }
+
+#loadNotice, #parseNotice { margin-top: .65rem; white-space: pre-line; }
+button:disabled { opacity:.55; cursor:wait; }
+</style>
+</head>
+
+<body>
+<main class="container">
+<fieldset>
+<legend>PNR Push Data</legend>
+<textarea id="raw" placeholder="Paste PNR Push Data here, then press enter."></textarea>
+
+<div class="action-bar">
+  <button id="analyse" type="button" aria-label="Analyse PNR">🔍</button>
+  <button id="poi" type="button" aria-label="Copy POI details" class="floating-tip" data-tip="Person of Interest (POI)">📋</button>
+  <button id="interdiction" type="button" aria-label="Prepare interdiction email" class="floating-tip" data-tip="Interdiction">🛫</button>
+  <span id="poiStatus" class="status" aria-live="polite"></span>
+</div>
+<div id="loadNotice" class="status" role="status"></div>
+<div id="parseNotice" class="status" role="status"></div>
+</fieldset>
+
+<fieldset id="interdictionEmailBox">
+<legend>Interdiction E-mail</legend>
+<div id="interdictionEmailHeader" class="email-header-line"></div>
+
+<div class="email-grid">
+  <div class="email-row">
+    <button id="copyToBtn" type="button">To:</button>
+    <input id="toField" class="email-field" type="text" disabled value="" />
+  </div>
+
+  <div class="email-row" id="ccRow" style="display:none;">
+    <button id="copyCcBtn" type="button">CC:</button>
+    <input id="ccField" class="email-field" type="text" disabled value="" />
+  </div>
+
+  <div class="email-actions">
+    <button id="copySubjectBtn" type="button">Subject</button>
+    <button id="copyBodyBtn" type="button">E-mail Body</button>
+    <span id="emailStatus" class="status" aria-live="polite"></span>
+  </div>
+</div>
+</fieldset>
+
+<fieldset id="passengerBox">
+<legend>Select Passenger</legend>
+<div id="passengerList" class="radio-list"></div>
+</fieldset>
+
+<fieldset id="personalBox">
+<legend>Personal Details</legend>
+<div class="form-grid">
+  <div class="row4">
+    <div class="field">
+      <div class="label">Surname</div>
+      <input id="pdSurname" type="text" />
+    </div>
+    <div class="field">
+      <div class="label">Given Names</div>
+      <input id="pdGiven" type="text" />
+    </div>
+    <div class="field">
+      <div class="label">Gender</div>
+      <select id="pdGender">
+        <option value=""></option>
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+      </select>
+    </div>
+    <div class="field">
+      <div class="label">Date of Birth</div>
+      <input id="pdDob" type="text" inputmode="numeric" placeholder="dd/mm/yyyy" />
+    </div>
+  </div>
+
+  <div class="row4b">
+    <div class="field">
+      <div class="label">AMS Number</div>
+      <input id="pdAms" type="text" value="" />
+    </div>
+    <div class="field">
+      <div class="label">Nationality</div>
+      <select id="pdNationality"></select>
+    </div>
+    <div class="field">
+      <div class="label">Passport Number</div>
+      <input id="pdPassport" type="text" />
+    </div>
+    <div class="field">
+      <div class="label">Interdiction Port</div>
+      <input id="pdInterdiction" type="text" />
+    </div>
+  </div>
+</div>
+</fieldset>
+
+<fieldset id="travelBox">
+<legend>Travel Details</legend>
+<div class="form-grid">
+  <div class="row4">
+    <div class="field">
+      <div class="label">Interdiction Officer</div>
+      <input id="tdOfficer" type="text" list="officerList" autocomplete="off" />
+      <datalist id="officerList"></datalist>
+    </div>
+    <div class="field">
+      <div class="label">Flight Number</div>
+      <input id="tdFlightNumber" type="text" />
+    </div>
+    <div class="field">
+      <div class="label">POI Source</div>
+      <select id="tdPoiSource">
+        <option value=""></option>
+        <option value="Auto Screen">Auto Screen</option>
+        <option value="Manual Screen">Manual Screen</option>
+        <option value="NZ ALO">NZ ALO</option>
+        <option value="NZCS">NZCS</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+    <div class="field">
+      <div class="label">PNR Number</div>
+      <input id="tdPnrNumber" type="text" />
+    </div>
+  </div>
+
+  <div class="row4">
+    <div class="field">
+      <div class="label">Origin Port</div>
+      <input id="tdOriginPort" type="text" />
+    </div>
+    <div class="field">
+      <div class="label">Transit Port 1</div>
+      <input id="tdTransit1" type="text" />
+    </div>
+    <div class="field">
+      <div class="label">Transit Port 2</div>
+      <input id="tdTransit2" type="text" />
+    </div>
+    <div class="field">
+      <div class="label">Arrival Port</div>
+      <input id="tdArrivalPort" type="text" />
+    </div>
+  </div>
+
+  <div class="row4">
+    <div class="field">
+      <div class="label">Profile Code 1</div>
+      <select id="tdProfile1"></select>
+    </div>
+    <div class="field">
+      <div class="label">Profile Code 2</div>
+      <select id="tdProfile2"></select>
+    </div>
+    <div class="field">
+      <div class="label">Arrival Date</div>
+      <input id="tdArrivalDate" type="text" placeholder="dd/mm/yyyy" />
+    </div>
+    <div class="field">
+      <div class="label">Arrival Time (24hr Clock)</div>
+      <div style="display:flex; gap:0.5rem;">
+        <select id="tdArrHour"></select>
+        <select id="tdArrMin"></select>
+      </div>
+    </div>
+  </div>
+
+  <div class="row4">
+    <div class="field">
+      <div class="label">Departure Date</div>
+      <input id="tdDepartureDate" type="text" placeholder="dd/mm/yyyy" />
+    </div>
+    <div class="field">
+      <div class="label">Departure Time (24hr Clock, NZ Time)</div>
+      <div style="display:flex; gap:0.5rem;">
+        <select id="tdDepHour"></select>
+        <select id="tdDepMin"></select>
+      </div>
+    </div>
+    <div class="field">
+      <div class="label">ALO Involved</div>
+      <div style="display:flex; flex-direction:column; gap:0.25rem; padding:0.25rem 0;">
+        <label><input type="radio" name="tdAloInvolved" value="Yes"> Yes</label>
+        <label><input type="radio" name="tdAloInvolved" value="No"> No</label>
+      </div>
+    </div>
+    <div class="field">
+      <div class="label">&nbsp;</div>
+      <div style="height: 2.1rem;"></div>
+    </div>
+  </div>
+</div>
+</fieldset>
+
+<fieldset id="bookingBox">
+<legend>Booking Details</legend>
+<div class="form-grid">
+  <div class="row4">
+    <div class="field">
+      <div class="label">Date of Booking</div>
+      <input id="bdBookingDate" type="text" placeholder="dd/mm/yyyy" />
+    </div>
+    <div class="field">
+      <div class="label">Baggage Weight</div>
+      <input id="bdBaggageWeight" type="text" />
+    </div>
+    <div class="field">
+      <div class="label">Return Date</div>
+      <input id="bdReturnDate" type="text" placeholder="dd/mm/yyyy" />
+    </div>
+    <div class="field">
+      <div class="label">Travel Agency</div>
+      <input id="bdTravelAgency" type="text" />
+    </div>
+  </div>
+</div>
+</fieldset>
+</main>
+
+<script>
+/* MyPOI 2 — pure PNR readers and calculations. No network, DOM or storage.
+ * Rules and rationale: mypoi-v2/RULES.md. Each segment reader is independently testable.
+ * Supported input: PNRGOV EDIFACT plus one-segment-per-line extracts.
+ */
+const PNR = (() => {
+  'use strict';
+  const unique = xs => [...new Set(xs)];
+  const clean = x => String(x ?? '').trim();
+  const upper = x => clean(x).toUpperCase();
+  const pad = n => String(n).padStart(2, '0');
+  function splitEscaped(text, separator, release = '?') {
+    const out = []; let part = '';
+    for (let i = 0; i < text.length; i++) {
+      if (text[i] === release && i + 1 < text.length) { part += text[i] + text[++i]; }
+      else if (text[i] === separator) { out.push(part); part = ''; }
+      else part += text[i];
+    }
+    out.push(part); return out;
+  }
+  function tokenize(input) {
+    let text = String(input).replace(/\r\n?/g, '\n').trim();
+    let comp = ':', element = '+', release = '?', end = "'";
+    if (text.startsWith('UNA') && text.length >= 9) {
+      [comp, element, , release, , end] = text.slice(3, 9).split(''); text = text.slice(9);
+    }
+    // Typographic segment terminators appear in copied PDFs; never alter apostrophes inside names.
+    text = text.replace(/’(?=\s*(?:[A-Z]{3}[+\n]|$))/g, end);
+    const terminated = splitEscaped(text, end, release);
+    const chunks = terminated.length > 1 ? terminated : text.split(/\n(?=[A-Z]{3}(?:\+|$))/);
+    const unescape = s => {
+      let out = ''; for (let i = 0; i < s.length; i++) {
+        if (s[i] === release && i + 1 < s.length) i++; out += s[i];
+      } return out.trim();
+    };
+    return chunks.map((chunk, index) => {
+      const raw = chunk.trim();
+      const fields = splitEscaped(raw.replace(/\n/g, ''), element, release);
+      return {tag: upper(fields.shift()), c: fields.map(f => splitEscaped(f, comp, release).map(unescape)), raw, index,
+        wrapped: /\S\n\S/.test(raw)};
+    }).filter(s => /^[A-Z]{3}$/.test(s.tag));
+  }
+  function dateParts(value, kind = 'travel', referenceYear = new Date().getFullYear()) {
+    const s = upper(value); let d, m, y;
+    if (/^\d{6}$/.test(s)) { d = +s.slice(0,2); m = +s.slice(2,4); y = +s.slice(4); }
+    else if (/^\d{2}[A-Z]{3}(\d{2}|\d{4})$/.test(s)) {
+      d = +s.slice(0,2); m = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'].indexOf(s.slice(2,5)) + 1; y = +s.slice(5);
+    } else if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) { [d,m,y] = s.split('/').map(Number); }
+    else return null;
+    if (y < 100) { y += 2000; if (kind === 'birth' ? y > referenceYear : y > referenceYear + 49) y -= 100; }
+    const ms = Date.UTC(y,m-1,d), dt = new Date(ms);
+    if (y < 1900 || m < 1 || m > 12 || d < 1 || dt.getUTCMonth() !== m-1 || dt.getUTCDate() !== d) return null;
+    return {y,m,d,key:`${y}-${pad(m)}-${pad(d)}`, display:`${pad(d)}/${pad(m)}/${y}`};
+  }
+  function time(value) { const s = clean(value); return /^([01]\d|2[0-3])[0-5]\d$/.test(s) ? s : ''; }
+  function stripTitle(value, attached = false) {
+    let s = clean(value).replace(/\s+/g,' ');
+    s = s.replace(/(?:^|\s)(MR|MRS|MS|MISS|MSTR|MASTER|DR|PROF|SIR|MADAM)\.?$/i, '').trim();
+    if (attached && /^[A-Z]+$/.test(s)) s = s.replace(/(MRS|MISS|MSTR|MR|MS)$/,'');
+    return s;
+  }
+  const nameKey = p => upper(p.surname) + '|' + upper(p.given).replace(/[^\p{L}\p{N}]/gu,'');
+  const sameName = (a,b) => nameKey(a) === nameKey(b);
+  function readTIF(s) {
+    if (s.c[0]?.[1] === 'G') return [];
+    return s.c.slice(1).filter(c => c[0]).map(c => ({surname:s.c[0]?.[0] || '', given:stripTitle(c[0],true), ref:c[2] || '', type:c[1] || '', docs:[], warnings:[], index:s.index}));
+  }
+  function readDOCS(s, year) {
+    if (s.c[0]?.[0] !== 'DOCS') return null;
+    const text = (s.c[0].slice(8).join(':') || '').trim();
+    const start = text.indexOf('/'); if (start < 0) return null;
+    const p = text.slice(start+1).split('/'); if (p.length < 7) return null;
+    const birth = dateParts(p[4], 'birth', year);
+    return {docType:upper(p[0]), issuing:upper(p[1]), docNo:clean(p[2]), nationality:upper(p[3]),
+      dob:birth?.display || '', sex:upper(p[5]), expiry:dateParts(p[6], 'travel', year)?.display || '',
+      surname:clean(p[7]), given:stripTitle(p.slice(8).filter(Boolean).filter(x=>x!=='H').join(' ')),
+      refs:unique(s.c.slice(1).map(c=>c[2]).filter(Boolean)), index:s.index,
+      warnings:p[4] && !birth ? ['Unrecognised birth date; enter it manually.'] : []};
+  }
+  function readTVL(s, year) {
+    const dt = s.c[0] || [], carrier = s.c[3] || [], product = s.c[4] || [];
+    const dep = upper(s.c[1]?.[0]), arr = upper(s.c[2]?.[0]);
+    if (!dep || !arr || !carrier[0] || !/^\d+[A-Z]?$/.test(product[0] || '')) return null;
+    return {dep,arr, carrier:upper(carrier[0]), operatingCarrier:upper(carrier[1]), flight:product[0],
+      depDate:dateParts(dt[0], 'travel', year), depTime:time(dt[1]), arrDate:dateParts(dt[2], 'travel', year), arrTime:time(dt[3]),
+      dateVariation:dt[4] || '', index:s.index, status:'', operatingFlight:'', warnings:[]};
+  }
+  function readRCI(s, year) {
+    return s.c.filter(c=>c[0] && c[1]).map(c=>({system:c[0],locator:c[1],type:c[2] || '',date:dateParts(c[3], 'travel',year)?.display || ''}));
+  }
+  function readTBD(s) {
+    const c = s.c[1] || []; if (!c[0] && !c[1]) return null;
+    const unit = c[2] === '700' || upper(c[3]) === 'KGM' ? 'kg' : c[2] === '701' || upper(c[3]) === 'LBR' ? 'lb' : '';
+    return {pieces:/^\d+$/.test(c[0] || '') ? +c[0] : null, weight:/^\d+(\.\d+)?$/.test(c[1] || '') ? +c[1] : null,
+      unit, pool:s.c[3]?.[0] || '', index:s.index};
+  }
+  function readAgency(s) {
+    if (s.tag === 'IFT') return clean(s.c.slice(1).flat().join(' ')).replace(/^TA\s+/i,'');
+    if (s.tag === 'ADD' && s.c[1]?.[0] === 'AM') return s.c[1][1] || '';
+    if (s.tag === 'LTS') return s.raw.match(/\/7\/RM TA\s+(.+)$/)?.[1] || '';
+    return '';
+  }
+  const newBooking = id => ({id,passengers:[],docs:[],flights:[],locators:[],bags:[],warnings:[],agency:'',bookingDate:'',seats:[],payments:[],amounts:[]});
+  function parse(input, year = new Date().getFullYear()) {
+    const segments = tokenize(input), bookings = []; let b = newBooking(0), currentPax = null, currentFlight = null;
+    let hasSRC = segments.some(s=>s.tag==='SRC'), started = !hasSRC, history = false, headers = [];
+    const finish = () => { if (b.passengers.length || b.docs.length || b.flights.length || b.locators.length) bookings.push(b); };
+    for (const s of segments) {
+      if (s.tag === 'SRC') { finish(); b = newBooking(bookings.length); currentPax=null;currentFlight=null;started=true;history=false;continue; }
+      if (s.tag === 'UNH') { history=false; continue; }
+      if (!started) { if(s.tag==='TVL') {const f=readTVL(s,year);if(f)headers.push(f);} continue; }
+      if (s.tag === 'SAC') { history=true; b.warnings.push('Historical records were excluded from current fields.'); }
+      if (history) continue;
+      if (s.wrapped) b.warnings.push('Wrapped source lines were joined; check names against the original PNR.');
+      switch(s.tag) {
+        case 'TIF': {
+          const names=readTIF(s); for(const p of names) {
+            let existing=p.ref ? b.passengers.find(q=>q.ref===p.ref) : null;
+            if(!existing && currentFlight) existing=b.passengers.find(q=>sameName(p,q));
+            if(!existing) {existing=p;b.passengers.push(p);} currentPax=existing;
+          } break;
+        }
+        case 'SSR': {
+          const d=readDOCS(s,year);if(d){d.ownerRef=!currentFlight ? currentPax?.ref || '' : '';b.docs.push(d);}
+          if(['SEAT','RQST'].includes(s.c[0]?.[0])) b.seats.push({seat:s.c[1]?.[0] || '', ref:s.c[1]?.[2] || ''}); break;
+        }
+        case 'TVL': {
+          const f=readTVL(s,year); if(f){b.flights.push(f);currentFlight=f;currentPax=null;}
+          else if(currentFlight && !s.c[1]?.[0] && !s.c[2]?.[0] && s.c[4]?.[0]) currentFlight.operatingFlight=s.c[4][0];
+          else b.warnings.push('An open, non-air or incomplete travel segment needs manual review.'); break;
+        }
+        case 'TRA': if(currentFlight){currentFlight.operatingCarrier=s.c[0]?.[0] || '';currentFlight.operatingFlight=s.c[1]?.[0] || '';}break;
+        case 'RPI': if(currentFlight)currentFlight.status=s.c[1]?.[0] || '';break;
+        case 'RCI': {
+          const rs=readRCI(s,year);if(!b.locators.length){b.locators=rs;b.bookingDate=rs.find(r=>r.date)?.date || '';}
+          break;
+        }
+        case 'TBD': {const bag=readTBD(s);if(bag){bag.ownerRef=currentPax?.ref || '';bag.flightIndex=currentFlight?.index;b.bags.push(bag);}break;}
+        case 'IFT': if((s.c[1]?.[0] || '').startsWith('TA ')) b.agency=readAgency(s);break;
+        case 'ADD': case 'LTS': if(!b.agency)b.agency=readAgency(s);break;
+        case 'SSD': b.seats.push({seat:s.c[0]?.[0] || '',ref:currentPax?.ref || ''});break;
+        case 'FOP': b.payments.push(s.c);break;
+        case 'MON': b.amounts.push(s.c);break;
+      }
+    }
+    finish();
+    for (const book of bookings) {
+      // Associate explicitly by reference first, then exact normalised name. Never fuzzy-match identities.
+      for(const d of book.docs) {
+        let candidates=d.refs.length ? book.passengers.filter(p=>d.refs.includes(p.ref)) : book.passengers.filter(p=>sameName(p,d));
+        if(!candidates.length && d.ownerRef) candidates=book.passengers.filter(p=>{
+          const given=upper(p.given).replace(/\s/g,''),documentGiven=upper(d.given).replace(/\s/g,'');
+          const infant=['MI','FI'].includes(d.sex),passengerInfant=p.type==='IN';
+          return p.ref===d.ownerRef && upper(p.surname)===upper(d.surname) && given.length>=3 && documentGiven.startsWith(given) && infant===passengerInfant;
+        });
+        if(candidates.length===1) candidates[0].docs.push(d);
+        else if(!candidates.length && (d.surname || d.given)) {
+          const p={surname:d.surname,given:d.given,ref:d.refs[0] || '',type:'',docs:[d],warnings:[],index:d.index};book.passengers.push(p);
+        } else book.warnings.push('A document could not be linked to one passenger; verify it manually.');
+      }
+      for (const p of book.passengers) {
+        const ds=[...new Map(p.docs.map(d=>[JSON.stringify([d.docNo,d.nationality,d.dob,d.sex,d.surname,d.given]),d])).values()];
+        const passports=ds.filter(d=>d.docType==='P' && d.docNo);
+        const chosen=passports.length===1 ? passports[0] : passports.length>1 ? null : ds[0];
+        p.details=chosen || {};if(passports.length>1)p.warnings.push('Multiple passport records: enter the correct document details manually.');
+        if(chosen?.surname)p.surname=chosen.surname;if(chosen?.given)p.given=chosen.given;
+        p.warnings.push(...(chosen?.warnings || []));
+      }
+      if(!book.flights.length && headers.length===1) {book.flights=[headers[0]];book.warnings.push('Only the message flight is available; full itinerary is missing.');}
+      book.warnings=unique(book.warnings);
+      book.passengers.forEach((p,i)=>p.id=`${book.id}:${i}`);
+    }
+    return {bookings,segmentCount:segments.length,warnings:bookings.length>1?['Multiple bookings: fields follow the selected passenger’s booking.']:[]};
+  }
+  // Convert local wall-clock to an instant by verifying candidate offsets. Ambiguous / impossible times fail explicitly.
+  const formatters=new Map();
+  function zonedParts(ms,zone) {
+    if(!formatters.has(zone))formatters.set(zone,new Intl.DateTimeFormat('en-GB',{timeZone:zone,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}));
+    const o={};for(const p of formatters.get(zone).formatToParts(ms))if(p.type!=='literal')o[p.type]=+p.value;
+    return {y:o.year,m:o.month,d:o.day,h:o.hour,min:o.minute};
+  }
+  function localInstant(date,hhmm,zone) {
+    if(!date || !time(hhmm) || !zone)return {error:'Missing date, time or airport timezone.'};
+    try {
+      const target=Date.UTC(date.y,date.m-1,date.d,+hhmm.slice(0,2),+hhmm.slice(2));const candidates=[];
+      for(const shift of [-48,-24,0,24,48]) {
+        const sample=target+shift*3600000,p=zonedParts(sample,zone);
+        const offset=Date.UTC(p.y,p.m-1,p.d,p.h,p.min)-sample,guess=target-offset,q=zonedParts(guess,zone);
+        if(q.y===date.y&&q.m===date.m&&q.d===date.d&&q.h===+hhmm.slice(0,2)&&q.min===+hhmm.slice(2))candidates.push(guess);
+      }
+      const found=unique(candidates);return found.length===1?{ms:found[0]}:{error:found.length?'Ambiguous daylight-saving time.':'Nonexistent daylight-saving time.'};
+    }catch(e){return {error:'Airport timezone is not supported by this browser.'};}
+  }
+  function toNZ(f,airports) {
+    const r=localInstant(f.depDate,f.depTime,airports[f.dep]?.tz);if(r.error)return r;
+    const p=zonedParts(r.ms,'Pacific/Auckland');return {date:`${pad(p.d)}/${pad(p.m)}/${p.y}`,time:pad(p.h)+pad(p.min)};
+  }
+  function route(book,airports,nzCodes) {
+    const warnings=[],nz=new Set(nzCodes), seen=new Set();
+    const flights=book.flights.filter(f=>{
+      const k=[f.dep,f.arr,f.depDate?.key,f.depTime,f.carrier,f.flight].join('|');
+      if(['XX','HX','UN','UC','NO'].includes(f.status)||seen.has(k))return false;seen.add(k);return true;
+    }).map(f=>({...f,instant:localInstant(f.depDate,f.depTime,airports[f.dep]?.tz).ms}));
+    // Sort only when EVERY instant is known. A mix of local times is not a valid chronology.
+    if(flights.every(f=>Number.isFinite(f.instant)))flights.sort((a,b)=>a.instant-b.instant);
+    else warnings.push('Some flight times cannot be ordered reliably; source order retained.');
+    const i=flights.findIndex(f=>nz.has(f.arr)&&!nz.has(f.dep)),arrival=flights[i];
+    if(!arrival)return {warnings:[...warnings,'No inbound New Zealand flight was identified.'],flights};
+    const path=[arrival];for(let j=i-1;j>=0;j--){if(flights[j].arr!==path[0].dep)break;path.unshift(flights[j]);}
+    if(i>0&&path.length===1)warnings.push('Itinerary is disconnected; check origin and transit ports.');
+    const transits=path.slice(0,-1).map(f=>f.arr);if(transits.length>2)warnings.push('More than two transits: showing the final two.');
+    const departure=toNZ(arrival,airports);if(departure.error)warnings.push('Departure NZ time left blank: '+departure.error);
+    if(!arrival.arrDate || !arrival.arrTime)warnings.push('Arrival date or time is missing or invalid.');
+    if(arrival.operatingCarrier&&arrival.operatingCarrier!==arrival.carrier)warnings.push('Codeshare: displayed flight uses the booked carrier; verify airline contact before sending.');
+    return {arrival,departure,origin:path[0].dep,transits:transits.slice(-2),exit:flights.slice(i+1).find(f=>nz.has(f.dep)&&!nz.has(f.arr)),flights,warnings};
+  }
+  function baggage(book,pax,flight) {
+    const tagged=book.bags.filter(b=>b.ownerRef&&b.ownerRef===pax.ref);
+    let bags=tagged.length?tagged:book.passengers.length===1?book.bags:[];
+    if(flight) {const scoped=bags.filter(b=>b.flightIndex===flight.index);if(scoped.length)bags=scoped;}
+    return unique(bags.map(b=>`${b.pieces===null?'':b.pieces+' bag'+(b.pieces===1?'':'s')}${b.weight===null?'':(b.pieces===null?'':', ')+b.weight+' '+(b.unit||'(unit unknown)')+' total'}${b.pool?' (pooled)':''}`)).join('; ');
+  }
+  function csv(text,separator=',') {
+    const rows=[];let row=[],value='',quoted=false;
+    for(let i=0;i<text.length;i++){const c=text[i];if(c==='"'){if(quoted&&text[i+1]==='"'){value+='"';i++;}else quoted=!quoted;}
+      else if(c===separator&&!quoted){row.push(value.trim());value='';}
+      else if((c==='\n'||c==='\r')&&!quoted){if(c==='\r'&&text[i+1]==='\n')i++;row.push(value.trim());if(row.some(Boolean))rows.push(row);row=[];value='';}
+      else value+=c;
+    }row.push(value.trim());if(row.some(Boolean))rows.push(row);return rows;
+  }
+  function contacts(text) {
+    const first=text.split(/\r?\n/).find(l=>l.trim()&&!/^\s*(#|\/\/)/.test(l))||'';
+    const sep=first.includes('\t')?'\t':first.includes('|')?'|':',';
+    const rows=csv(text,sep).filter(r=>!/^\s*(#|\/\/)/.test(r[0]));
+    let idx=[0,1,2,3,4]; const h=(rows[0]||[]).map(x=>x.toLowerCase().replace(/[ _-]/g,''));
+    if(h.includes('to')) {idx=[h.findIndex(x=>['interdictionport','port','airport'].includes(x)),h.findIndex(x=>['airlinecode','airline','carrier'].includes(x)),h.findIndex(x=>['airlinename','name'].includes(x)),h.indexOf('to'),h.indexOf('cc')];rows.shift();}
+    const map={};for(const row of rows){const [port,airline,name,to,cc]=idx.map(i=>row[i]||'');if(!/^[A-Z]{3}$/.test(upper(port))||!/^[A-Z0-9]{2,3}$/.test(upper(airline)))continue;
+      const emails=x=>unique(x.split(/[;,]/).map(clean).filter(Boolean));const key=upper(port)+'|'+upper(airline);
+      const prev=map[key];map[key]={name:clean(name),to:unique([...(prev?.to||[]),...emails(to)]),cc:unique([...(prev?.cc||[]),...emails(cc)])};
+    }return map;
+  }
+  function fillTemplate(text,values) {
+    return text.replace(/\{\{([a-zA-Z]+)\}\}/g,(_,key)=>{if(!Object.hasOwn(values,key))throw Error('Unknown template field: '+key);return String(values[key]??'');});
+  }
+  return {tokenize,dateParts,time,readTIF,readDOCS,readTVL,readRCI,readTBD,parse,route,localInstant,toNZ,baggage,csv,contacts,fillTemplate};
+})();
+
+/* MyPOI 2 — lookup loading, screen state and copy-only outputs.
+ * Runtime: one HTML; all processing code inline. Remote files are data, NEVER evaluated.
+ */
+(() => {
+  'use strict';
+  const BASE='https://raw.githubusercontent.com/x994910/pnr-lookups/main/mypoi-v2/';
+  const INTERNAL={ports:'http://cmsiboc/services/api/ports',users:'http://cmsiboc/services/api/lookups/getusers'};
+  const $=id=>document.getElementById(id),value=id=>$(id).value.trim();
+  const state={parsed:null,pax:null,book:null,raw:'',generation:0,forms:new Map(),email:null,poiCopied:false,lookups:null,loading:null,ports:{},users:null,userLoading:null};
+  const FORM_IDS=['pdSurname','pdGiven','pdGender','pdDob','pdAms','pdNationality','pdPassport','pdInterdiction','tdOfficer','tdFlightNumber','tdPoiSource','tdPnrNumber','tdOriginPort','tdTransit1','tdTransit2','tdArrivalPort','tdProfile1','tdProfile2','tdArrivalDate','tdArrHour','tdArrMin','tdDepartureDate','tdDepHour','tdDepMin','tdAloInvolved','bdBookingDate','bdBaggageWeight','bdReturnDate','bdTravelAgency'];
+  const getField=id=>id==='tdAloInvolved' ? document.querySelector('input[name="tdAloInvolved"]:checked')?.value || '' : $(id).value;
+  const setField=(id,v)=>{if(id==='tdAloInvolved')document.querySelectorAll('input[name="tdAloInvolved"]').forEach(el=>el.checked=el.value===v);else $(id).value=v??'';};
+  const snapshot=()=>Object.fromEntries(FORM_IDS.map(id=>[id,getField(id)]));
+  const apply=fields=>{for(const id of FORM_IDS)setField(id,fields[id]||'');indicators();};
+  function notice(id,text,bad=false){const el=$(id);el.textContent=text;el.className='status '+(bad?'bad':'ok');el.style.display=text?'block':'none';}
+  function options(id,items){const el=$(id),old=el.value;el.replaceChildren(new Option('',''));for(const item of items)el.add(new Option(item.text??item,item.value??item));el.value=old;}
+  function indicators(){for(const [text,id] of [['AMS Number','pdAms'],['Profile Code 1','tdProfile1'],['POI Source','tdPoiSource'],['ALO Involved','tdAloInvolved'],['Interdiction Officer','tdOfficer']]){
+    const label=[...document.querySelectorAll('.label')].find(l=>l.textContent.trim()===text);label?.classList.toggle('missing',!getField(id));
+  }}
+  function invalidateEmail(){state.email=null;$('interdictionEmailBox').style.display='none';}
+  function invalidateCopy(){state.poiCopied=false;$('interdiction').style.display='none';invalidateEmail();}
+  function resetAnalysis(){state.generation++;state.parsed=null;state.pax=null;state.book=null;state.forms.clear();invalidateCopy();
+    ['passengerBox','personalBox','travelBox','bookingBox','poi'].forEach(id=>$(id).style.display='none');$('passengerList').replaceChildren();apply({});notice('parseNotice','');notice('poiStatus','');
+  }
+  async function fetchText(url){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
+    try{const response=await fetch(url,{cache:'no-store',signal:controller.signal,referrerPolicy:'no-referrer'});if(!response.ok)throw Error('HTTP '+response.status);return await response.text();}finally{clearTimeout(timer);}
+  }
+  async function loadLookups(){if(state.lookups)return state.lookups;if(state.loading)return state.loading;
+    state.loading=(async()=>{notice('loadNotice','Loading reference files…');
+      const names=['nationalities.json','airports.json','profile-codes.txt'];
+      const results=await Promise.allSettled(names.map(name=>fetchText(BASE+name)));
+      const failed=results.flatMap((r,i)=>r.status==='rejected'?[names[i]]:[]);if(failed.length)throw Error('Cannot load '+failed.join(', ')+'. Connect to the network, then press Analyse to retry.');
+      const nat=JSON.parse(results[0].value),air=JSON.parse(results[1].value);
+      if(nat.schemaVersion!==1||!Array.isArray(nat.options)||!nat.codes||!nat.aliases||air.schemaVersion!==1||!air.airports||!Array.isArray(air.nzCodes))throw Error('Reference file format is invalid.');
+      const profiles=results[2].value.split(/\r?\n/).map(l=>{const i=l.indexOf('|');return i<1?null:{value:l.slice(0,i).trim(),text:l.slice(i+1).trim()};}).filter(Boolean);
+      if(!profiles.length)throw Error('Profile codes are empty or invalid.');
+      options('pdNationality',nat.options);options('tdProfile1',profiles);options('tdProfile2',profiles);
+      state.lookups={nat,air,profiles};notice('loadNotice','');return state.lookups;
+    })().catch(e=>{notice('loadNotice',e.message,true);throw e;}).finally(()=>state.loading=null);return state.loading;
+  }
+  async function loadPorts(){try{const data=JSON.parse(await fetchText(INTERNAL.ports));const list=Array.isArray(data)?data:data.ports||data.data||data.items||[];
+    for(const p of list)if(p.Code&&p.Name)state.ports[String(p.Code).toUpperCase()]=String(p.Name);
+  }catch(e){/* Internal service is optional enrichment; codes remain editable. No invented names. */}}
+  const port=code=>code ? code+(state.ports[code]?' '+state.ports[code]:'') : '';
+  const flightNo=f=>f?f.carrier+(/^\d+$/.test(f.flight)?f.flight.padStart(3,'0'):f.flight):'';
+  const pretty=s=>String(s||'').split(' ').map(w=>w?w[0].toUpperCase()+w.slice(1).toLowerCase():'').join(' ');
+  function derive(book,pax){
+    const {nat,air}=state.lookups,route=PNR.route(book,air.airports,air.nzCodes),f=route.arrival,d=pax.details;
+    const nationalityName=nat.codes[d.nationality]||'',mappedNationality=nat.aliases[nationalityName]||nationalityName;
+    const fields={pdSurname:pax.surname.toUpperCase(),pdGiven:pretty(pax.given),pdGender:['M','MI'].includes(d.sex)?'Male':['F','FI'].includes(d.sex)?'Female':'',pdDob:d.dob||'',pdPassport:d.docType==='P'?d.docNo||'':'',pdNationality:nat.options.includes(mappedNationality)?mappedNationality:'',tdPnrNumber:book.locators[0]?.locator||'',bdBookingDate:book.bookingDate,bdTravelAgency:book.agency,bdBaggageWeight:PNR.baggage(book,pax,f)};
+    if(f)Object.assign(fields,{pdInterdiction:port(f.dep),tdFlightNumber:flightNo(f),tdOriginPort:port(route.origin),tdTransit1:port(route.transits[0]),tdTransit2:port(route.transits[1]),tdArrivalPort:port(f.arr),tdArrivalDate:f.arrDate?.display||'',tdArrHour:f.arrTime.slice(0,2),tdArrMin:f.arrTime.slice(2),tdDepartureDate:route.departure.date||'',tdDepHour:route.departure.time?.slice(0,2)||'',tdDepMin:route.departure.time?.slice(2)||'',bdReturnDate:route.exit?.depDate?.display||''});
+    const warnings=[...state.parsed.warnings,...book.warnings,...pax.warnings,...route.warnings];
+    if(d.nationality&&!fields.pdNationality)warnings.push('Nationality code is not mapped; select it manually.');
+    if(book.bags.length&&!fields.bdBaggageWeight)warnings.push('Baggage could not be assigned to this passenger; check it manually.');
+    if(!Object.keys(state.ports).length)warnings.push('Airport names are unavailable; airport codes are shown.');
+    return {fields,warnings:[...new Set(warnings)]};
+  }
+  function selectPassenger(id){if(state.pax)state.forms.set(state.pax.id,snapshot());
+    const book=state.parsed.bookings.find(b=>b.passengers.some(p=>p.id===id)),pax=book?.passengers.find(p=>p.id===id);if(!pax)return;
+    state.book=book;state.pax=pax;invalidateCopy();const derived=derive(book,pax);apply(state.forms.get(id)||derived.fields);notice('parseNotice',derived.warnings.join('\n'),true);
+    ['personalBox','travelBox','bookingBox','poi'].forEach(id=>$(id).style.display=id==='poi'?'inline-block':'block');
+  }
+  async function analyse(){resetAnalysis();const generation=state.generation,raw=$('raw').value;if(!raw.trim())return;$('analyse').disabled=true;
+    try{await loadLookups();if(generation!==state.generation)return;const parsed=PNR.parse(raw);state.raw=raw;state.parsed=parsed;
+      const passengers=parsed.bookings.flatMap(b=>b.passengers);if(!passengers.length){notice('parseNotice','No supported passenger records found. Check the pasted PNR format.',true);return;}
+      for(const p of passengers){const row=document.createElement('label');row.className='radio-item';const radio=document.createElement('input');radio.type='radio';radio.name='passenger';radio.value=p.id;radio.id='pax_'+p.id.replace(':','_');
+        const text=document.createElement('span'),book=parsed.bookings.find(b=>b.passengers.includes(p));text.textContent=p.surname.toUpperCase()+', '+pretty(p.given)+(passengers.filter(q=>q.surname===p.surname&&q.given===p.given).length>1?' (reference '+(p.ref||p.id)+')':'')+(parsed.bookings.length>1?' — '+(book.locators[0]?.locator||'booking '+(book.id+1)):'');row.append(radio,text);$('passengerList').append(row);
+      }$('passengerBox').style.display='block';$('passengerList').querySelector('input').checked=true;selectPassenger(passengers[0].id);
+    }catch(e){notice('parseNotice','Analysis unavailable: '+e.message,true);}finally{$('analyse').disabled=false;}
+  }
+  async function copy(text){try{if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(text);return true;}}catch(e){}
+    const active=document.activeElement,ta=document.createElement('textarea');ta.value=text;ta.style.cssText='position:fixed;left:-9999px';document.body.append(ta);ta.select();let ok=false;try{ok=document.execCommand('copy');}catch(e){}ta.remove();active?.focus();return ok;
+  }
+  const oneLine=s=>String(s||'').replace(/[\r\n\t]+/g,' ').trim();
+  const fingerprint=()=>JSON.stringify([state.generation,snapshot()]);
+  function isCurrent(){return !!state.pax&&$('raw').value===state.raw;}
+  async function copyPOI(){if(!isCurrent())return;const stamp=fingerprint();$('poi').disabled=true;
+    try{const notes=await fetchText(BASE+'poi-notes.txt');if(!notes.trim())throw Error('POI notes template is empty.');if(stamp!==fingerprint()||!isCurrent())throw Error('Details changed; copy again.');
+      const text=FORM_IDS.map(id=>oneLine(getField(id))).join('\n')+'\n'+state.raw.replace(/\r\n?/g,'\n').replace(/\n+$/,'')+'\n---NEXT---\n'+notes;
+      const ok=await copy(text);if(stamp!==fingerprint())return;state.poiCopied=ok;$('interdiction').style.display=ok?'inline-block':'none';notice('poiStatus',ok?'Copied POI text':'Copy failed',!ok);
+    }catch(e){notice('poiStatus',e.message,true);}finally{$('poi').disabled=false;}
+  }
+  function emailValues(airline){const dob=value('pdDob'),parts=PNR.dateParts(dob,'birth');const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return {
+    al:airline,surname:value('pdSurname').toUpperCase(),given:value('pdGiven'),flightNo:value('tdFlightNumber').toUpperCase(),arrPort:value('tdArrivalPort'),arrDate:value('tdArrivalDate'),gender:value('pdGender'),dob:parts?String(parts.d).padStart(2,'0')+'/'+months[parts.m-1]+'/'+parts.y:dob,nat:value('pdNationality'),passNo:value('pdPassport'),pnr:value('tdPnrNumber')};}
+  async function prepareEmail(){if(!state.poiCopied||!isCurrent())return;const stamp=fingerprint();$('interdiction').disabled=true;invalidateEmail();
+    try{const [contacts,subject,body]=await Promise.all(['inter-cont.txt','email-subject.txt','interdiction-email.txt'].map(f=>fetchText(BASE+f)));
+      if(stamp!==fingerprint()||!state.poiCopied)throw Error('Details changed; copy POI again.');
+      const portCode=value('pdInterdiction').toUpperCase().match(/^([A-Z]{3})\b/)?.[1]||'',carrier=value('tdFlightNumber').toUpperCase().match(/^([A-Z0-9]{2})(?=\d)/)?.[1]||'';
+      const record=PNR.contacts(contacts)[portCode+'|'+carrier];if(!record?.to.length)throw Error('No To address found for this port and airline.');
+      if(!subject.trim()||!body.trim())throw Error('An email template is empty.');
+      const values=emailValues(record.name||carrier);state.email={stamp,to:record.to.join('; '),cc:record.cc.join('; '),subject:PNR.fillTemplate(subject,values),body:PNR.fillTemplate(body,values)};
+      $('toField').value=state.email.to;$('ccField').value=state.email.cc;$('ccRow').style.display=state.email.cc?'grid':'none';
+      $('interdictionEmailHeader').textContent='E-mail prepared for '+value('tdFlightNumber')+' at '+value('pdInterdiction')+' — not sent';$('interdictionEmailBox').style.display='block';notice('emailStatus','Interdiction e-mail ready');
+    }catch(e){notice('poiStatus',e.message,true);}finally{$('interdiction').disabled=false;}
+  }
+  async function copyEmail(key){if(!state.email||state.email.stamp!==fingerprint()){invalidateEmail();return;}const ok=await copy(state.email[key]);notice('emailStatus',ok?'Copied '+({to:'To addresses',cc:'CC addresses',subject:'Subject',body:'e-mail body'}[key]):'Copy failed',!ok);}
+  let officerTimer;
+  async function officers(){if(state.users)return state.users;if(state.userLoading)return state.userLoading;
+    state.userLoading=(async()=>{const data=JSON.parse(await fetchText(INTERNAL.users));state.users=[...new Set((Array.isArray(data)?data:data.users||data.data||data.items||[]).map(p=>p.Name||p.DisplayName||p.FullName||p.UserName).filter(Boolean))].sort();return state.users;})().finally(()=>state.userLoading=null);return state.userLoading;
+  }
+  $('tdOfficer').addEventListener('input',()=>{clearTimeout(officerTimer);officerTimer=setTimeout(async()=>{try{const names=await officers(),q=value('tdOfficer').toLowerCase();$('officerList').replaceChildren();for(const n of names.filter(n=>n.toLowerCase().includes(q)).slice(0,50))$('officerList').append(new Option(n,n));}catch(e){$('tdOfficer').title='Officer lookup unavailable; type the name manually.';}},200);});
+  $('analyse').addEventListener('click',analyse);$('raw').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();if(!$('analyse').disabled)analyse();}});
+  $('raw').addEventListener('input',resetAnalysis);$('passengerList').addEventListener('change',e=>{if(e.target.name==='passenger')selectPassenger(e.target.value);});
+  for(const id of FORM_IDS.filter(id=>id!=='tdAloInvolved')){const el=$(id);el.addEventListener('input',()=>{invalidateCopy();indicators();});el.addEventListener('change',()=>{invalidateCopy();indicators();});}
+  document.querySelectorAll('[name="tdAloInvolved"]').forEach(el=>el.addEventListener('change',()=>{invalidateCopy();indicators();}));
+  $('poi').addEventListener('click',copyPOI);$('interdiction').addEventListener('click',prepareEmail);
+  for(const [id,key] of [['copyToBtn','to'],['copyCcBtn','cc'],['copySubjectBtn','subject'],['copyBodyBtn','body']])$(id).addEventListener('click',()=>copyEmail(key));
+  for(const [id,max] of [['tdArrHour',23],['tdArrMin',59],['tdDepHour',23],['tdDepMin',59]])options(id,Array.from({length:max+1},(_,i)=>String(i).padStart(2,'0')));
+  for(const id of ['poi','interdiction']){const el=$(id);el.addEventListener('mouseenter',()=>el.classList.add('tip-on'));el.addEventListener('mouseleave',()=>el.classList.remove('tip-on'));el.addEventListener('mousemove',e=>{el.style.setProperty('--tip-x',e.offsetX+'px');el.style.setProperty('--tip-y',e.offsetY+'px');});}
+  // Label existing fields for assistive technology without altering their visual layout.
+  document.querySelectorAll('.field').forEach((field,i)=>{const label=field.querySelector('.label');if(!label)return;label.id='field_label_'+i;field.querySelectorAll('input,select').forEach(el=>el.setAttribute('aria-labelledby',label.id));});
+  indicators();loadLookups().catch(()=>{});loadPorts();
+})();
+
+</script>
+</body>
+</html>

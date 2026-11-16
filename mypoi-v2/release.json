@@ -1,0 +1,54 @@
+{
+  "version": "2.0.0",
+  "date": "2026-11-16",
+  "files": {
+    "AIRPORT-LICENSE.txt": {
+      "sha256": "685b4a7b0fbac021cf4c56513ee5c7532c7cd174177e94c3350a92b504f929a3",
+      "bytes": 1072
+    },
+    "airports.json": {
+      "sha256": "3ae0b442111ae917273c5a2061b97decc4e46ec38fba7d8127f3c6be8fe4384f",
+      "bytes": 578626
+    },
+    "email-subject.txt": {
+      "sha256": "cbf3d4daa697821dacb54a17cda8e3052213c1b52db39d9231eaf1db48e74661",
+      "bytes": 70
+    },
+    "inter-cont.txt": {
+      "sha256": "fc3859a2d7782c1d4c535c1f84186666c55c8b9a0d79fc660355b656f5825a40",
+      "bytes": 14954
+    },
+    "interdiction-email.txt": {
+      "sha256": "a3614c5fb867ede264053113756520883ec37fb07d5b2ea248010ef3f855fc2e",
+      "bytes": 2253
+    },
+    "MyPOI.html": {
+      "sha256": "15db9653f9a8863dd7d5166b7d7c24d8bed9a03a573ba4c5905951b881649dd7",
+      "bytes": 44323
+    },
+    "nationalities.json": {
+      "sha256": "4a3987ece966348562048b945630ade8b77fa48b742e3398d1267051a7ddcf82",
+      "bytes": 14122
+    },
+    "poi-notes.txt": {
+      "sha256": "500f3366e7c369031061a9568df1577cc3fad7ffaea38b2404ee0750f104d4fe",
+      "bytes": 3719
+    },
+    "profile-codes.txt": {
+      "sha256": "59caa7b3574fe407fb8fd6e1617b1d763f5280b05f24898e73d60a0e2122e516",
+      "bytes": 1969
+    },
+    "README.md": {
+      "sha256": "03e529b109f9bc615bb977366a2c4ba486da880a86e50a1bd51f9f1f7709e649",
+      "bytes": 2981
+    },
+    "RULES.md": {
+      "sha256": "7e632574461e44ff9f3984e0a5ae739c368e3401be3679e6aa5f5ef4a4f308e2",
+      "bytes": 8908
+    },
+    "VERIFICATION.md": {
+      "sha256": "0ebda28a56e7dd2b616db4eb536ed4556e73c7a2ca9918c233ff0d1e90756b1c",
+      "bytes": 2758
+    }
+  }
+}

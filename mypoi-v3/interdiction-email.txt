@@ -1,0 +1,49 @@
+Kia Ora,
+
+ATTENTION: {{al}}
+请注意：{{al}}
+
+New Zealand Immigration Border Operations must speak with the below mentioned passenger prior to boarding {{flightNo}} to{{arrPort}}, New Zealand on {{arrDate}}.
+以下乘客在登机前往新西兰之前必须要电话联系新西兰移民局边境安全属工作人员进行沟通，确认是否可以登机。
+
+Flight Number: {{flightNo}}
+Date of arrival:{{arrDate}}
+
+Note: The passenger does not have permission to board this flight until we have spoken with them.
+注意：在未与新西兰移民局沟通并得到允许登机指令前，此乘客不可以登机前往新西兰。
+
+Surname: {{surname}}
+(姓)
+
+Forenames: {{given}}
+(名)
+
+Gender: {{gender}}
+(性别)
+
+Birth date: {{dob}}
+（出生日期）
+
+Nationality: {{nat}}
+(飞机航班号)
+
+Passport Number: {{passNo}}
+(护照号码)
+
+PNR Number: {{pnr}}
+(订票信息)
+
+Please keep their luggage on stand-by and arrange to call us as early as possible before boarding commences to avoid any delays to your flight to New Zealand.
+在电话确认乘客可以登机之前，请保持乘客托运行李等待，不要让乘客的托运行李登机，以避免在乘客不被允许登机的情况下影响此班飞机正常起飞时间。
+
+Please contact Immigration New Zealand on +64 9 277 1250 for permission to board the passenger.
+在收到此邮件后，尽快联系乘客并请立即和新西兰移民局沟通，电话 0064 9 277 1250。
+
+Your airline has an obligation under Section 97 of the New Zealand Immigration Act 2009 to comply with an Immigration Border Officers direction.  Failing to do so may result in an infringement or prosecution.
+根据新西兰移民法2009，97章，贵航空公司有责任服从新西兰移民局指令。如果贵公司不能履行职责，我们有权依法罚款且提请侵权诉讼。
+
+Kindly acknowledge this message. Please note: English is the official language of New Zealand. Please respond in English for better communication.
+收到此邮件后请尽快确认收件并回复。请理解英语为新西兰移民局官方语言，请贵航空公司工作人员用英文与我们联系以取得更好的交流效果。
+
+Thank you,
+非常感谢

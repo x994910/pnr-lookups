@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>MyPOI</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+html { font-size: clamp(0.85rem, 1.2vw, 1rem); }
+body {
+margin: 0; padding: 1rem;
+font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+line-height: 1.4; color: #111; background: #f4f4f4;
+}
+input, button, select, textarea { font: inherit; line-height: inherit; }
+
+.container { max-width: 960px; margin: 0 auto; display: grid; gap: 1rem; }
+fieldset { border: 1px solid #bbb; border-radius: 4px; padding: 1rem 1.25rem; background: #fff; }
+legend { padding: 0 0.25rem; font-weight: 700; }
+
+textarea{
+width:100%; min-height:220px; resize:vertical; box-sizing:border-box;
+background:#fff; color:#111; border:1px solid #bbb; border-radius:4px; padding:0.6rem 0.7rem;
+font: 13px/1.35 ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+.action-bar { display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap; margin-top:0.65rem; }
+.action-bar button { border:1px solid #bbb; background:#f3f3f3; padding:0.45rem 0.8rem; border-radius:4px; cursor:pointer; }
+.action-bar button:hover { background:#ececec; }
+
+/* POI button colour and visibility rules */
+#poi { background:#FCCC28; display:none; }
+#poi:hover { background:#FCCC28; }
+
+/* INTERDICTION button, only visible after POI click (controlled by JS) */
+#interdiction { display:none; background:#d7ecff; }
+#interdiction:hover { background:#cbe6ff; }
+
+/* Floating hover text that follows the mouse inside the button */
+.floating-tip{
+position: relative;
+overflow: visible;
+}
+.floating-tip::after{
+content: attr(data-tip);
+position: absolute;
+left: var(--tip-x, -9999px);
+top: var(--tip-y, -9999px);
+transform: translate(12px, 12px);
+background: rgba(17, 17, 17, 0.85);
+color: #fff;
+font-size: 0.8em;
+padding: 0.2rem 0.4rem;
+border-radius: 4px;
+white-space: nowrap;
+pointer-events: none;
+opacity: 0;
+transition: opacity 0.08s linear;
+z-index: 20;
+}
+.floating-tip.tip-on::after{
+opacity: 1;
+}
+
+/* Small status message near buttons */
+.status {
+font-size: 0.95em;
+color: #333;
+padding: 0.25rem 0.45rem;
+border-radius: 4px;
+background: #f7f7f7;
+border: 1px solid #ddd;
+display: none;
+}
+.status.ok { background: #eef8ef; border-color: #cfe9d1; color: #1e5f2b; }
+.status.bad { background: #fdeeee; border-color: #f2c7c7; color: #7a1e1e; }
+
+/* Passenger selector */
+#passengerBox { display:none; }
+.radio-list { display:grid; gap:0.35rem; margin-top:0.5rem; }
+.radio-item { display:flex; gap:0.5rem; align-items:center; padding:0.35rem 0.5rem; border:1px solid #ddd; border-radius:4px; background:#fafafa; }
+.radio-item:hover { background:#f3f3f3; }
+
+/* Panels */
+#personalBox { display:none; }
+#travelBox { display:none; }
+#bookingBox { display:none; }
+
+.form-grid { display:grid; gap:0.6rem; }
+.row4 { display:grid; grid-template-columns: 1fr 1.2fr 0.8fr 0.9fr; gap:0.6rem; }
+.row4b { display:grid; grid-template-columns: 0.9fr 1.2fr 1fr 1.2fr; gap:0.6rem; }
+.field { display:flex; flex-direction:column; gap:0.25rem; }
+.label { font-weight: 600; color:#333; }
+input[type="text"], select {
+width:100%; box-sizing:border-box;
+background:#fff; color:#111; border:1px solid #bbb; border-radius:4px; padding:0.45rem 0.55rem;
+}
+@media (max-width: 820px){
+.row4, .row4b { grid-template-columns: 1fr; }
+}
+
+/* Required label glow when the field is empty */
+.label.missing{
+color: #b00000;
+text-shadow: 0 0 6px rgba(255, 0, 0, 0.75), 0 0 12px rgba(255, 0, 0, 0.55);
+animation: redGlowPulse 1.2s ease-in-out infinite;
+}
+@keyframes redGlowPulse{
+0%, 100% { text-shadow: 0 0 6px rgba(255, 0, 0, 0.65), 0 0 12px rgba(255, 0, 0, 0.45); }
+50% { text-shadow: 0 0 10px rgba(255, 0, 0, 0.85), 0 0 18px rgba(255, 0, 0, 0.65); }
+}
+
+/* Interdiction e-mail fieldset */
+#interdictionEmailBox { display:none; }
+.email-header-line { margin: 0.25rem 0 0.75rem 0; color:#111; }
+.email-grid { display:grid; gap:0.6rem; }
+.email-row {
+display:grid;
+grid-template-columns: auto 1fr;
+gap: 0.6rem;
+align-items: center;
+}
+.email-row button {
+width: fit-content;
+border:1px solid #bbb;
+background:#f3f3f3;
+padding:0.35rem 0.7rem;
+border-radius:4px;
+cursor:pointer;
+}
+.email-row button:hover { background:#ececec; }
+.email-field {
+width:100%;
+box-sizing:border-box;
+border:1px solid #ccc;
+border-radius:4px;
+padding:0.45rem 0.55rem;
+background:#efefef;
+color:#555;
+}
+.email-actions { display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.4rem; }
+.email-actions button {
+border:1px solid #bbb;
+background:#f3f3f3;
+padding:0.45rem 0.8rem;
+border-radius:4px;
+cursor:pointer;
+}
+.email-actions button:hover { background:#ececec; }
+
+#loadNotice, #parseNotice { margin-top: .65rem; white-space: pre-line; }
+button:disabled { opacity:.55; cursor:wait; }
+</style>
+</head>
+
+<body>
+<main class="container">
+<fieldset>
+<legend>PNR Push Data</legend>
+<textarea id="raw" placeholder="Paste PNR Push Data here, then press enter."></textarea>
+
+<div class="action-bar">
+  <button id="analyse" type="button" aria-label="Analyse PNR">🔍</button>
+  <button id="poi" type="button" aria-label="Copy POI details" class="floating-tip" data-tip="Person of Interest (POI)">📋</button>
+  <button id="interdiction" type="button" aria-label="Prepare interdiction email" class="floating-tip" data-tip="Interdiction">🛫</button>
+  <span id="poiStatus" class="status" aria-live="polite"></span>
+</div>
+<div id="loadNotice" class="status" role="status"></div>
+<div id="parseNotice" class="status" role="status"></div>
+</fieldset>
+
+<fieldset id="interdictionEmailBox">
+<legend>Interdiction E-mail</legend>
+<div id="interdictionEmailHeader" class="email-header-line"></div>
+
+<div class="email-grid">
+  <div class="email-row">
+    <button id="copyToBtn" type="button">To:</button>
+    <input id="toField" class="email-field" type="text" disabled value="" />
+  </div>
+
+  <div class="email-row" id="ccRow" style="display:none;">
+    <button id="copyCcBtn" type="button">CC:</button>
+    <input id="ccField" class="email-field" type="text" disabled value="" />
+  </div>
+
+  <div class="email-actions">
+    <button id="copySubjectBtn" type="button">Subject</button>
+    <button id="copyBodyBtn" type="button">E-mail Body</button>
+    <span id="emailStatus" class="status" aria-live="polite"></span>
+  </div>
+</div>
+</fieldset>
+
+<fieldset id="passengerBox">
+<legend>Select Passenger</legend>
+<div id="passengerList" class="radio-list"></div>
+</fieldset>
+
+<fieldset id="personalBox">
+<legend>Personal Details</legend>
+<div class="form-grid">
+  <div class="row4">
+    <div class="field">
+      <div class="label">Surname</div>
+      <input id="pdSurname" type="text" />
+    </div>
+    <div class="field">
+      <div class="label">Given Names</div>
+      <input id="pdGiven" type="text" />
+    </div>
+    <div class="field">
+      <div class="label">Gender</div>
+      <select id="pdGender">
+        <option value=""></option>
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+      </select>
+    </div>
+    <div class="field">
+      <div class="label">Date of Birth</div>
+      <input id="pdDob" type="text" inputmode="numeric" placeholder="dd/mm/yyyy" />
+    </div>
+  </div>
+
+  <div class="row4b">
+    <div class="field">
+      <div class="label">AMS Number</div>
+      <input id="pdAms" type="text" value="" />
+    </div>
+    <div class="field">
+      <div class="label">Nationality</div>
+      <select id="pdNationality"></select>
+    </div>
+    <div class="field">
+      <div class="label">Passport Number</div>
+      <input id="pdPassport" type="text" />
+    </div>
+    <div class="field">
+      <div class="label">Interdiction Port</div>
+      <input id="pdInterdiction" type="text" />
+    </div>
+  </div>
+</div>
+</fieldset>
+
+<fieldset id="travelBox">
+<legend>Travel Details</legend>
+<div class="form-grid">
+  <div class="row4">
+    <div class="field">
+      <div class="label">Interdiction Officer</div>
+      <input id="tdOfficer" type="text" list="officerList" autocomplete="off" />
+      <datalist id="officerList"></datalist>
+    </div>
+    <div class="field">
+      <div class="label">Flight Number</div>
+      <input id="tdFlightNumber" type="text" />
+    </div>
+    <div class="field">
+      <div class="label">POI Source</div>
+      <select id="tdPoiSource">
+        <option value=""></option>
+        <option value="Auto Screen">Auto Screen</option>
+        <option value="Manual Screen">Manual Screen</option>
+        <option value="NZ ALO">NZ ALO</option>
+        <option value="NZCS">NZCS</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+    <div class="field">
+      <div class="label">PNR Number</div>
+      <input id="tdPnrNumber" type="text" />
+    </div>
+  </div>
+
+  <div class="row4">
+    <div class="field">
+      <div class="label">Origin Port</div>
+      <input id="tdOriginPort" type="text" />
+    </div>
+    <div class="field">
+      <div class="label">Transit Port 1</div>
+      <input id="tdTransit1" type="text" />
+    </div>
+    <div class="field">
+      <div class="label">Transit Port 2</div>
+      <input id="tdTransit2" type="text" />
+    </div>
+    <div class="field">
+      <div class="label">Arrival Port</div>
+      <input id="tdArrivalPort" type="text" />
+    </div>
+  </div>
+
+  <div class="row4">
+    <div class="field">
+      <div class="label">Profile Code 1</div>
+      <select id="tdProfile1"></select>
+    </div>
+    <div class="field">
+      <div class="label">Profile Code 2</div>
+      <select id="tdProfile2"></select>
+    </div>
+    <div class="field">
+      <div class="label">Arrival Date</div>
+      <input id="tdArrivalDate" type="text" placeholder="dd/mm/yyyy" />
+    </div>
+    <div class="field">
+      <div class="label">Arrival Time (24hr Clock)</div>
+      <div style="display:flex; gap:0.5rem;">
+        <select id="tdArrHour"></select>
+        <select id="tdArrMin"></select>
+      </div>
+    </div>
+  </div>
+
+  <div class="row4">
+    <div class="field">
+      <div class="label">Departure Date</div>
+      <input id="tdDepartureDate" type="text" placeholder="dd/mm/yyyy" />
+    </div>
+    <div class="field">
+      <div class="label">Departure Time (24hr Clock, NZ Time)</div>
+      <div style="display:flex; gap:0.5rem;">
+        <select id="tdDepHour"></select>
+        <select id="tdDepMin"></select>
+      </div>
+    </div>
+    <div class="field">
+      <div class="label">ALO Involved</div>
+      <div style="display:flex; flex-direction:column; gap:0.25rem; padding:0.25rem 0;">
+        <label><input type="radio" name="tdAloInvolved" value="Yes"> Yes</label>
+        <label><input type="radio" name="tdAloInvolved" value="No"> No</label>
+      </div>
+    </div>
+    <div class="field">
+      <div class="label">&nbsp;</div>
+      <div style="height: 2.1rem;"></div>
+    </div>
+  </div>
+</div>
+</fieldset>
+
+<fieldset id="bookingBox">
+<legend>Booking Details</legend>
+<div class="form-grid">
+  <div class="row4">
+    <div class="field">
+      <div class="label">Date of Booking</div>
+      <input id="bdBookingDate" type="text" placeholder="dd/mm/yyyy" />
+    </div>
+    <div class="field">
+      <div class="label">Baggage Weight</div>
+      <input id="bdBaggageWeight" type="text" />
+    </div>
+    <div class="field">
+      <div class="label">Return Date</div>
+      <input id="bdReturnDate" type="text" placeholder="dd/mm/yyyy" />
+    </div>
+    <div class="field">
+      <div class="label">Travel Agency</div>
+      <input id="bdTravelAgency" type="text" />
+    </div>
+  </div>
+</div>
+</fieldset>
+</main>
+
+<script>
+(() => {
+  'use strict';
+  const BASE='https://raw.githubusercontent.com/x994910/pnr-lookups/main/mypoi-v3/';
+
+  const ENGINE_FILE = 'pnr-engine-1.0.0.js';
+  const ENGINE_INTEGRITY = 'sha384-pibF0i5dgXG4l5K69Q0se3PvrVHX7/AJ9iiGteK3bhghMJw0YXC6xIR50bC3TLLt';
+  let PNR;
+  let engineLoading;
+
+  function loadEngine() {
+    if (PNR) return Promise.resolve(PNR);
+    if (!engineLoading) engineLoading = downloadEngine().finally(() => { engineLoading = null; });
+    return engineLoading;
+  }
+
+  async function downloadEngine() {
+    const response = await fetch(BASE + ENGINE_FILE, {
+      integrity: ENGINE_INTEGRITY,
+      credentials: 'omit',
+      referrerPolicy: 'no-referrer',
+      signal: AbortSignal.timeout(12000)
+    }).catch(() => { throw Error('Could not download or verify the MyPOI engine. Check GitHub access and press Analyse to retry.'); });
+    if (!response.ok) throw Error('MyPOI engine download failed (HTTP ' + response.status + '). Press Analyse to retry.');
+    const source = new Blob([await response.arrayBuffer()], {type: 'text/javascript'});
+    const url = URL.createObjectURL(source);
+    const script = document.createElement('script');
+    try {
+      await new Promise((resolve, reject) => {
+        script.onload = resolve;
+        script.onerror = () => reject(Error('The browser could not run the verified MyPOI engine.'));
+        script.src = url;
+        document.head.append(script);
+      });
+      const engine = globalThis.MyPOIEngine;
+      if (!engine || typeof engine.parse !== 'function' || typeof engine.derive !== 'function') {
+        throw Error('The downloaded MyPOI engine is incompatible.');
+      }
+      PNR = engine;
+      return PNR;
+    } finally {
+      script.remove();
+      URL.revokeObjectURL(url);
+    }
+  }
+  const INTERNAL={ports:'http://cmsiboc/services/api/ports',users:'http://cmsiboc/services/api/lookups/getusers'};
+  const $=id=>document.getElementById(id),value=id=>$(id).value.trim();
+  const state={parsed:null,pax:null,book:null,raw:'',generation:0,forms:new Map(),email:null,poiCopied:false,lookups:null,loading:null,ports:{},users:null,userLoading:null};
+  const FORM_IDS=['pdSurname','pdGiven','pdGender','pdDob','pdAms','pdNationality','pdPassport','pdInterdiction','tdOfficer','tdFlightNumber','tdPoiSource','tdPnrNumber','tdOriginPort','tdTransit1','tdTransit2','tdArrivalPort','tdProfile1','tdProfile2','tdArrivalDate','tdArrHour','tdArrMin','tdDepartureDate','tdDepHour','tdDepMin','tdAloInvolved','bdBookingDate','bdBaggageWeight','bdReturnDate','bdTravelAgency'];
+  const getField=id=>id==='tdAloInvolved' ? document.querySelector('input[name="tdAloInvolved"]:checked')?.value || '' : $(id).value;
+  const setField=(id,v)=>{if(id==='tdAloInvolved')document.querySelectorAll('input[name="tdAloInvolved"]').forEach(el=>el.checked=el.value===v);else $(id).value=v??'';};
+  const snapshot=()=>Object.fromEntries(FORM_IDS.map(id=>[id,getField(id)]));
+  const apply=fields=>{for(const id of FORM_IDS)setField(id,fields[id]||'');indicators();};
+  function notice(id,text,bad=false){const el=$(id);el.textContent=text;el.className='status '+(bad?'bad':'ok');el.style.display=text?'block':'none';}
+  function options(id,items){const el=$(id),old=el.value;el.replaceChildren(new Option('',''));for(const item of items)el.add(new Option(item.text??item,item.value??item));el.value=old;}
+  function indicators(){for(const [text,id] of [['AMS Number','pdAms'],['Profile Code 1','tdProfile1'],['POI Source','tdPoiSource'],['ALO Involved','tdAloInvolved'],['Interdiction Officer','tdOfficer']]){
+    const label=[...document.querySelectorAll('.label')].find(l=>l.textContent.trim()===text);label?.classList.toggle('missing',!getField(id));
+  }}
+  function invalidateEmail(){state.email=null;$('interdictionEmailBox').style.display='none';}
+  function invalidateCopy(){state.poiCopied=false;$('interdiction').style.display='none';invalidateEmail();}
+  function resetAnalysis(){state.generation++;state.parsed=null;state.pax=null;state.book=null;state.forms.clear();invalidateCopy();
+    ['passengerBox','personalBox','travelBox','bookingBox','poi'].forEach(id=>$(id).style.display='none');$('passengerList').replaceChildren();apply({});notice('parseNotice','');notice('poiStatus','');
+  }
+  async function fetchText(url){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
+    try{const response=await fetch(url,{cache:'no-store',signal:controller.signal,referrerPolicy:'no-referrer'});if(!response.ok)throw Error('HTTP '+response.status);return await response.text();}finally{clearTimeout(timer);}
+  }
+  async function loadLookups(){if(state.lookups)return state.lookups;if(state.loading)return state.loading;
+    state.loading=(async()=>{notice('loadNotice','Loading reference files…');
+      const names=['nationalities.json','airports.json','profile-codes.txt'];
+      const results=await Promise.allSettled(names.map(name=>fetchText(BASE+name)));
+      const failed=results.flatMap((r,i)=>r.status==='rejected'?[names[i]]:[]);if(failed.length)throw Error('Cannot load '+failed.join(', ')+'. Connect to the network, then press Analyse to retry.');
+      const nat=JSON.parse(results[0].value),air=JSON.parse(results[1].value);
+      if(nat.schemaVersion!==1||!Array.isArray(nat.options)||!nat.codes||!nat.aliases||air.schemaVersion!==1||!air.airports||!Array.isArray(air.nzCodes))throw Error('Reference file format is invalid.');
+      const profiles=results[2].value.split(/\r?\n/).map(l=>{const i=l.indexOf('|');return i<1?null:{value:l.slice(0,i).trim(),text:l.slice(i+1).trim()};}).filter(Boolean);
+      if(!profiles.length)throw Error('Profile codes are empty or invalid.');
+      options('pdNationality',nat.options);options('tdProfile1',profiles);options('tdProfile2',profiles);
+      state.lookups={nat,air,profiles};notice('loadNotice','');return state.lookups;
+    })().catch(e=>{notice('loadNotice',e.message,true);throw e;}).finally(()=>state.loading=null);return state.loading;
+  }
+  async function loadPorts(){try{const data=JSON.parse(await fetchText(INTERNAL.ports));const list=Array.isArray(data)?data:data.ports||data.data||data.items||[];
+    for(const p of list)if(p.Code&&p.Name)state.ports[String(p.Code).toUpperCase()]=String(p.Name);
+  }catch(e){/* Internal service is optional enrichment; codes remain editable. No invented names. */}}
+  function selectPassenger(id){if(state.pax)state.forms.set(state.pax.id,snapshot());
+    const book=state.parsed.bookings.find(b=>b.passengers.some(p=>p.id===id)),pax=book?.passengers.find(p=>p.id===id);if(!pax)return;
+    state.book=book;state.pax=pax;invalidateCopy();const derived=PNR.derive(book,pax,{...state.lookups,ports:state.ports,parseWarnings:state.parsed.warnings});apply(state.forms.get(id)||derived.fields);notice('parseNotice',derived.warnings.join('\n'),true);
+    ['personalBox','travelBox','bookingBox','poi'].forEach(id=>$(id).style.display=id==='poi'?'inline-block':'block');
+  }
+  async function analyse(){resetAnalysis();const generation=state.generation,raw=$('raw').value;if(!raw.trim())return;$('analyse').disabled=true;
+    try{await Promise.all([loadLookups(),loadEngine()]);if(generation!==state.generation)return;const parsed=PNR.parse(raw);state.raw=raw;state.parsed=parsed;
+      const passengers=parsed.bookings.flatMap(b=>b.passengers);if(!passengers.length){notice('parseNotice','No supported passenger records found. Check the pasted PNR format.',true);return;}
+      for(const p of passengers){const row=document.createElement('label');row.className='radio-item';const radio=document.createElement('input');radio.type='radio';radio.name='passenger';radio.value=p.id;radio.id='pax_'+p.id.replace(':','_');
+        const text=document.createElement('span'),book=parsed.bookings.find(b=>b.passengers.includes(p));text.textContent=p.surname.toUpperCase()+', '+PNR.pretty(p.given)+(passengers.filter(q=>q.surname===p.surname&&q.given===p.given).length>1?' (reference '+(p.ref||p.id)+')':'')+(parsed.bookings.length>1?' — '+(book.locators[0]?.locator||'booking '+(book.id+1)):'');row.append(radio,text);$('passengerList').append(row);
+      }$('passengerBox').style.display='block';$('passengerList').querySelector('input').checked=true;selectPassenger(passengers[0].id);
+    }catch(e){notice('parseNotice','Analysis unavailable: '+e.message,true);}finally{$('analyse').disabled=false;}
+  }
+  async function copy(text){try{if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(text);return true;}}catch(e){}
+    const active=document.activeElement,ta=document.createElement('textarea');ta.value=text;ta.style.cssText='position:fixed;left:-9999px';document.body.append(ta);ta.select();let ok=false;try{ok=document.execCommand('copy');}catch(e){}ta.remove();active?.focus();return ok;
+  }
+  const oneLine=s=>String(s||'').replace(/[\r\n\t]+/g,' ').trim();
+  const fingerprint=()=>JSON.stringify([state.generation,snapshot()]);
+  function isCurrent(){return !!state.pax&&$('raw').value===state.raw;}
+  async function copyPOI(){if(!isCurrent())return;const stamp=fingerprint();$('poi').disabled=true;
+    try{const notes=await fetchText(BASE+'poi-notes.txt');if(!notes.trim())throw Error('POI notes template is empty.');if(stamp!==fingerprint()||!isCurrent())throw Error('Details changed; copy again.');
+      const text=FORM_IDS.map(id=>oneLine(getField(id))).join('\n')+'\n'+state.raw.replace(/\r\n?/g,'\n').replace(/\n+$/,'')+'\n---NEXT---\n'+notes;
+      const ok=await copy(text);if(stamp!==fingerprint())return;state.poiCopied=ok;$('interdiction').style.display=ok?'inline-block':'none';notice('poiStatus',ok?'Copied POI text':'Copy failed',!ok);
+    }catch(e){notice('poiStatus',e.message,true);}finally{$('poi').disabled=false;}
+  }
+  function emailValues(airline){const dob=value('pdDob'),parts=PNR.dateParts(dob,'birth');const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return {
+    al:airline,surname:value('pdSurname').toUpperCase(),given:value('pdGiven'),flightNo:value('tdFlightNumber').toUpperCase(),arrPort:value('tdArrivalPort'),arrDate:value('tdArrivalDate'),gender:value('pdGender'),dob:parts?String(parts.d).padStart(2,'0')+'/'+months[parts.m-1]+'/'+parts.y:dob,nat:value('pdNationality'),passNo:value('pdPassport'),pnr:value('tdPnrNumber')};}
+  async function prepareEmail(){if(!state.poiCopied||!isCurrent())return;const stamp=fingerprint();$('interdiction').disabled=true;invalidateEmail();
+    try{const [contacts,subject,body]=await Promise.all(['inter-cont.txt','email-subject.txt','interdiction-email.txt'].map(f=>fetchText(BASE+f)));
+      if(stamp!==fingerprint()||!state.poiCopied)throw Error('Details changed; copy POI again.');
+      const portCode=value('pdInterdiction').toUpperCase().match(/^([A-Z]{3})\b/)?.[1]||'',carrier=value('tdFlightNumber').toUpperCase().match(/^([A-Z0-9]{2})(?=\d)/)?.[1]||'';
+      const record=PNR.contacts(contacts)[portCode+'|'+carrier];if(!record?.to.length)throw Error('No To address found for this port and airline.');
+      if(!subject.trim()||!body.trim())throw Error('An email template is empty.');
+      const values=emailValues(record.name||carrier);state.email={stamp,to:record.to.join('; '),cc:record.cc.join('; '),subject:PNR.fillTemplate(subject,values),body:PNR.fillTemplate(body,values)};
+      $('toField').value=state.email.to;$('ccField').value=state.email.cc;$('ccRow').style.display=state.email.cc?'grid':'none';
+      $('interdictionEmailHeader').textContent='E-mail prepared for '+value('tdFlightNumber')+' at '+value('pdInterdiction')+' — not sent';$('interdictionEmailBox').style.display='block';notice('emailStatus','Interdiction e-mail ready');
+    }catch(e){notice('poiStatus',e.message,true);}finally{$('interdiction').disabled=false;}
+  }
+  async function copyEmail(key){if(!state.email||state.email.stamp!==fingerprint()){invalidateEmail();return;}const ok=await copy(state.email[key]);notice('emailStatus',ok?'Copied '+({to:'To addresses',cc:'CC addresses',subject:'Subject',body:'e-mail body'}[key]):'Copy failed',!ok);}
+  let officerTimer;
+  async function officers(){if(state.users)return state.users;if(state.userLoading)return state.userLoading;
+    state.userLoading=(async()=>{const data=JSON.parse(await fetchText(INTERNAL.users));state.users=[...new Set((Array.isArray(data)?data:data.users||data.data||data.items||[]).map(p=>p.Name||p.DisplayName||p.FullName||p.UserName).filter(Boolean))].sort();return state.users;})().finally(()=>state.userLoading=null);return state.userLoading;
+  }
+  $('tdOfficer').addEventListener('input',()=>{clearTimeout(officerTimer);officerTimer=setTimeout(async()=>{try{const names=await officers(),q=value('tdOfficer').toLowerCase();$('officerList').replaceChildren();for(const n of names.filter(n=>n.toLowerCase().includes(q)).slice(0,50))$('officerList').append(new Option(n,n));}catch(e){$('tdOfficer').title='Officer lookup unavailable; type the name manually.';}},200);});
+  $('analyse').addEventListener('click',analyse);$('raw').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();if(!$('analyse').disabled)analyse();}});
+  $('raw').addEventListener('input',resetAnalysis);$('passengerList').addEventListener('change',e=>{if(e.target.name==='passenger')selectPassenger(e.target.value);});
+  for(const id of FORM_IDS.filter(id=>id!=='tdAloInvolved')){const el=$(id);el.addEventListener('input',()=>{invalidateCopy();indicators();});el.addEventListener('change',()=>{invalidateCopy();indicators();});}
+  document.querySelectorAll('[name="tdAloInvolved"]').forEach(el=>el.addEventListener('change',()=>{invalidateCopy();indicators();}));
+  $('poi').addEventListener('click',copyPOI);$('interdiction').addEventListener('click',prepareEmail);
+  for(const [id,key] of [['copyToBtn','to'],['copyCcBtn','cc'],['copySubjectBtn','subject'],['copyBodyBtn','body']])$(id).addEventListener('click',()=>copyEmail(key));
+  for(const [id,max] of [['tdArrHour',23],['tdArrMin',59],['tdDepHour',23],['tdDepMin',59]])options(id,Array.from({length:max+1},(_,i)=>String(i).padStart(2,'0')));
+  for(const id of ['poi','interdiction']){const el=$(id);el.addEventListener('mouseenter',()=>el.classList.add('tip-on'));el.addEventListener('mouseleave',()=>el.classList.remove('tip-on'));el.addEventListener('mousemove',e=>{el.style.setProperty('--tip-x',e.offsetX+'px');el.style.setProperty('--tip-y',e.offsetY+'px');});}
+  // Label existing fields for assistive technology without altering their visual layout.
+  document.querySelectorAll('.field').forEach((field,i)=>{const label=field.querySelector('.label');if(!label)return;label.id='field_label_'+i;field.querySelectorAll('input,select').forEach(el=>el.setAttribute('aria-labelledby',label.id));});
+  indicators();loadLookups().catch(()=>{});loadPorts();
+})();
+
+</script>
+</body>
+</html>

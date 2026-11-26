@@ -369,7 +369,8 @@ button:disabled { opacity:.55; cursor:wait; }
 <script>
 (() => {
   'use strict';
-  const BASE='https://raw.githubusercontent.com/x994910/pnr-lookups/main/mypoi-v3/';
+  const BASE='https://raw.githubusercontent.com/x994910/pnr-lookups/437007e4b88f5a58889537d64583a5484952013a/mypoi-v3/';
+  const ENGINE_BASE='https://raw.githubusercontent.com/x994910/pnr-lookups/main/mypoi-v3/';
 
   const ENGINE_FILE = 'pnr-engine-1.0.0.js';
   const ENGINE_INTEGRITY = 'sha384-pibF0i5dgXG4l5K69Q0se3PvrVHX7/AJ9iiGteK3bhghMJw0YXC6xIR50bC3TLLt';
@@ -383,7 +384,7 @@ button:disabled { opacity:.55; cursor:wait; }
   }
 
   async function downloadEngine() {
-    const response = await fetch(BASE + ENGINE_FILE, {
+    const response = await fetch(ENGINE_BASE + ENGINE_FILE, {
       integrity: ENGINE_INTEGRITY,
       credentials: 'omit',
       referrerPolicy: 'no-referrer',

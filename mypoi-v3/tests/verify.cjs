@@ -52,3 +52,42 @@ testCase('Contacts duplicate keys preserve all recipients',()=>{const c=P.contac
 testCase('Text template substitution is literal and non-executable',()=>assert.equal(P.fillTemplate('{{given}} / {{al}}',{given:'<img src=x>',al:'Test'}),'<img src=x> / Test'));
 testCase('Unknown template placeholder fails clearly',()=>assert.throws(()=>P.fillTemplate('{{unknown}}',{})));
 testCase('Current GitHub copied reference formats validate',()=>{assert.ok(Object.keys(P.contacts(fs.readFileSync(__dirname+'/../inter-cont.txt','utf8'))).length>20);const n=JSON.parse(fs.readFileSync(__dirname+'/../nationalities.json','utf8'));assert.equal(n.codes.NZL,'New Zealand');assert.equal(n.codes.USA,'United States of America');});
+
+testCase('Each UNH message owns its header itinerary and passenger references',()=>{
+  const firstMessage="UNH+1+PNRGOV:21:1:IA'"+tvl+"SRC'"+tif+"UNT+5+1'";
+  const otherFlight="TVL+181126:1800:191126:0900+NRT+AKL+NZ+99:Y'";
+  const secondMessage="UNH+2+PNRGOV:21:1:IA'"+otherFlight+"SRC'TIF+OTHER+BOB:A:1'UNT+5+2'";
+  const result=parse(firstMessage+secondMessage);
+  assert.equal(result.bookings.length,2);
+  assert.equal(result.bookings[0].flights[0].dep,'SIN');
+  assert.equal(result.bookings[1].flights[0].dep,'NRT');
+  assert.notEqual(result.bookings[0].passengers[0].id,result.bookings[1].passengers[0].id);
+});
+testCase('Explicit non-PNRGOV messages do not contribute passengers',()=>{
+  const result=parse("UNH+1+PAXLST:05:B:UN'"+tif+"UNT+3+1'");
+  assert.equal(result.bookings.length,0);
+  assert.match(result.warnings[0],/PAXLST/);
+});
+testCase('Explicit DOCS ref cannot overwrite a differently named passenger',()=>{
+  const book=first(tif+"TIF+OTHER+BOB:A:2'"+docs.replace('TESTER/ALICE','OTHER/BOB'));
+  assert.equal(book.passengers[0].given,'ALICE');
+  assert.equal(book.passengers[0].details.docNo,undefined);
+  assert.equal(book.passengers[1].details.docNo,undefined);
+  assert.match(book.warnings[0],/conflicts/);
+});
+testCase('Unmatched explicit DOCS ref does not create or hydrate a passenger',()=>{
+  const book=first(tif+docs.replace('+::1', '+::9'));
+  assert.equal(book.passengers.length,1);
+  assert.equal(book.passengers[0].details.docNo,undefined);
+  assert.match(book.warnings[0],/unmatched/);
+});
+testCase('Selected booking locator cannot borrow another locator creation date',()=>{
+  const book=first("RCI+NZ:DEMO01+1A:DEMO02::161126'"+tif);
+  assert.equal(book.locators[0].locator,'DEMO01');
+  assert.equal(book.bookingDate,'');
+});
+testCase('Baggage from a different flight is excluded even for one traveller',()=>{
+  const book=first(tif+tvl+"TIF+TESTER+ALICE:A:1'TBD++1:12:700'TVL+171126:1500:171126:1610+AKL+WLG+NZ+4:Y'");
+  assert.match(P.baggage(book,book.passengers[0],book.flights[0]),/12 kg/);
+  assert.equal(P.baggage(book,book.passengers[0],book.flights[1]),'');
+});

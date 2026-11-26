@@ -42,6 +42,6 @@
   function baggage(book,pax,flight) {
     const tagged=book.bags.filter(b=>b.ownerRef&&b.ownerRef===pax.ref);
     let bags=tagged.length?tagged:book.passengers.length===1?book.bags:[];
-    if(flight) {const scoped=bags.filter(b=>b.flightIndex===flight.index);if(scoped.length)bags=scoped;}
+    if(flight) {const scoped=bags.filter(b=>b.flightIndex===flight.index);bags=scoped.length?scoped:bags.filter(b=>b.flightIndex===undefined);}
     return unique(bags.map(b=>`${b.pieces===null?'':b.pieces+' bag'+(b.pieces===1?'':'s')}${b.weight===null?'':(b.pieces===null?'':', ')+b.weight+' '+(b.unit||'(unit unknown)')+' total'}${b.pool?' (pooled)':''}`)).join('; ');
   }

@@ -1,11 +1,36 @@
   const newBooking = id => ({id,passengers:[],docs:[],flights:[],locators:[],bags:[],warnings:[],agency:'',bookingDate:'',seats:[],payments:[],amounts:[]});
   function parse(input, year = new Date().getFullYear()) {
-    const segments = tokenize(input), bookings = []; let b = newBooking(0), currentPax = null, currentFlight = null;
+    const segments = tokenize(input), bookings = [], warnings = [];
+    const enveloped = segments.some(segment => segment.tag === 'UNH');
+    if (!enveloped) bookings.push(...parseMessage(segments, year));
+    else {
+      let message = null;
+      const finishMessage = () => {
+        if (message) bookings.push(...parseMessage(message, year, bookings.length));
+        message = null;
+      };
+      for (const segment of segments) {
+        if (segment.tag === 'UNH') {
+          finishMessage();
+          const type = upper(segment.c[1]?.[0]);
+          if (!type || type === 'PNRGOV') message = [];
+          else warnings.push('Unsupported message type was skipped: ' + type + '.');
+        } else if (['UNT', 'UNB', 'UNZ'].includes(segment.tag)) finishMessage();
+        else if (message) message.push(segment);
+      }
+      finishMessage();
+    }
+    if (bookings.length > 1) warnings.push('Multiple bookings: fields follow the selected passenger’s booking.');
+    return {bookings, segmentCount:segments.length, warnings:unique(warnings)};
+  }
+
+  function parseMessage(segments, year, firstBookingId = 0) {
+    const bookings = [];
+    let b = newBooking(firstBookingId), currentPax = null, currentFlight = null;
     let hasSRC = segments.some(s=>s.tag==='SRC'), started = !hasSRC, history = false, headers = [];
     const finish = () => { if (b.passengers.length || b.docs.length || b.flights.length || b.locators.length) bookings.push(b); };
     for (const s of segments) {
-      if (s.tag === 'SRC') { finish(); b = newBooking(bookings.length); currentPax=null;currentFlight=null;started=true;history=false;continue; }
-      if (s.tag === 'UNH') { history=false; continue; }
+      if (s.tag === 'SRC') { finish(); b = newBooking(firstBookingId + bookings.length); currentPax=null;currentFlight=null;started=true;history=false;continue; }
       if (!started) { if(s.tag==='TVL') {const f=readTVL(s,year);if(f)headers.push(f);} continue; }
       if (s.tag === 'SAC') { history=true; b.warnings.push('Historical records were excluded from current fields.'); }
       if (history) continue;
@@ -30,7 +55,7 @@
         case 'TRA': if(currentFlight){currentFlight.operatingCarrier=s.c[0]?.[0] || '';currentFlight.operatingFlight=s.c[1]?.[0] || '';}break;
         case 'RPI': if(currentFlight)currentFlight.status=s.c[1]?.[0] || '';break;
         case 'RCI': {
-          const rs=readRCI(s,year);if(!b.locators.length){b.locators=rs;b.bookingDate=rs.find(r=>r.date)?.date || '';}
+          const rs=readRCI(s,year);if(!b.locators.length){b.locators=rs;b.bookingDate=rs[0]?.date || '';}
           break;
         }
         case 'TBD': {const bag=readTBD(s);if(bag){bag.ownerRef=currentPax?.ref || '';bag.flightIndex=currentFlight?.index;b.bags.push(bag);}break;}
@@ -46,11 +71,17 @@
       // Associate explicitly by reference first, then exact normalised name. Never fuzzy-match identities.
       for(const d of book.docs) {
         let candidates=d.refs.length ? book.passengers.filter(p=>d.refs.includes(p.ref)) : book.passengers.filter(p=>sameName(p,d));
-        if(!candidates.length && d.ownerRef) candidates=book.passengers.filter(p=>{
+        if(!d.refs.length && !candidates.length && d.ownerRef) candidates=book.passengers.filter(p=>{
           const given=upper(p.given).replace(/\s/g,''),documentGiven=upper(d.given).replace(/\s/g,'');
           const infant=['MI','FI'].includes(d.sex),passengerInfant=p.type==='IN';
           return p.ref===d.ownerRef && upper(p.surname)===upper(d.surname) && given.length>=3 && documentGiven.startsWith(given) && infant===passengerInfant;
         });
+        if (d.refs.length && (candidates.length !== 1 ||
+            (d.surname && upper(d.surname) !== upper(candidates[0].surname)) ||
+            (d.given && d.surname && !sameName(candidates[0], d)))) {
+          book.warnings.push('A document reference is unmatched or conflicts with the passenger name; verify it manually.');
+          continue;
+        }
         if(candidates.length===1) candidates[0].docs.push(d);
         else if(!candidates.length && (d.surname || d.given)) {
           const p={surname:d.surname,given:d.given,ref:d.refs[0] || '',type:'',docs:[d],warnings:[],index:d.index};book.passengers.push(p);
@@ -68,6 +99,6 @@
       book.warnings=unique(book.warnings);
       book.passengers.forEach((p,i)=>p.id=`${book.id}:${i}`);
     }
-    return {bookings,segmentCount:segments.length,warnings:bookings.length>1?['Multiple bookings: fields follow the selected passenger’s booking.']:[]};
+    return bookings;
   }
   // Convert local wall-clock to an instant by verifying candidate offsets. Ambiguous / impossible times fail explicitly.

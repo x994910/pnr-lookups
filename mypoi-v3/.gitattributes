@@ -1,1 +1,9 @@
 pnr-engine-*.js text eol=lf
+AIRPORT-LICENSE.txt -text
+airports.json -text
+nationalities.json -text
+profile-codes.txt -text
+inter-cont.txt -text
+poi-notes.txt -text
+email-subject.txt -text
+interdiction-email.txt -text

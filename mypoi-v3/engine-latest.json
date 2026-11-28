@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "api": 1,
+  "minLoader": 1,
+  "status": "approved",
+  "commit": "284990bef05abe02d56b8e4813523b0986649ffb",
+  "version": "1.0.2",
+  "engine": "pnr-engine-1.0.2.js",
+  "hashes": {
+    "pnr-engine-1.0.2.js": "Z2uC1WC8NguvKoQORDy2pLjaP2bB4aBxhdIBjv+30w/fTjxcm4UKlXHh6rXcp+0y",
+    "nationalities.json": "43+XGWRjFkFqSVvwh9CtRWcAfpcIDBYrQAL6KsV/1YIw4RSOIUPBP1+CL7iJ/hWi",
+    "airports.json": "lvE1eb+CnQkhPK8uL0leUfVB4AKmj+YPNQqwngQ5BRmxs/GejLTlURsUqrMQj6aV",
+    "profile-codes.txt": "5rjr0krXEDjivSXu0OVENLpVfmJntP4AQQ9XmagQ4pnatWe0djBIuCmcfBeQlxwh",
+    "poi-notes.txt": "OR5uxf8d2Bzuu9txzsYzgIp1wAsRnHyyYgT2B1nhPTaskj3Ukmwavps7u9/hzEd3",
+    "inter-cont.txt": "CiOPynG1+GoueLo9cmG+VGPAUzx0Q4L35FFtUFJTDaVKWjxuSY2/+noAE8CPIpYz",
+    "email-subject.txt": "jGGriNojF8yHrd1mjXMfasCFPv6anxcrbaLHnuBmjhEuxBeT5UvFpY/kly098/Gv",
+    "interdiction-email.txt": "lPl1hqAHcWid7SgINAi/c/1iPgyENttJw7S9X7Rq73rkFDC2YqGBrNGmMqFgnq65"
+  }
+}

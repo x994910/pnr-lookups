@@ -1,24 +1,16 @@
 # MyPOI v3
 
-Open `MyPOI.html` as a local file in the office browser. It is the only office file. The first Analyse in each open page downloads the versioned engine, and the browser verifies its SHA-384 integrity before loading it. The verified engine stays in memory for subsequent analyses in that page. PNR processing runs in that browser. The existing office lookups and clipboard workflow are part of the HTML. GitHub also serves the reference and template files.
-
-## Where to make a change
+The current published office release uses engine 1.0.1. This branch proposes the signed-update loader and Case #1 correction. Start with [Signed release design and maintenance](SIGNED-RELEASE.md) for review, provisioning, tests, signing, publication and rollback.
 
 | Source | Responsibility |
 | --- | --- |
-| engine/syntax.js | EDIFACT envelope delimiters, tokenization and normalization helpers |
-| engine/segment-readers.js | Date and time interpretation plus individual PNR segments |
-| engine/booking.js | Booking boundaries, passenger/document association and segment context |
-| engine/itinerary.js | NZ itinerary selection, timezone conversion and baggage assignment |
-| engine/form-fields.js | Mapping parsed records and references into office form values |
-| engine/templates.js | Contact matching and template substitution |
+| engine/syntax.js | EDIFACT delimiters, tokenization and normalization |
+| engine/segment-readers.js | Dates, times and segment decoding |
+| engine/booking.js | Booking and passenger/document association |
+| engine/itinerary.js | Itinerary, timezone and baggage decisions |
+| engine/form-fields.js | Parsed records to office form values |
+| engine/templates.js | Contact matching and template rendering |
+| release-loader.js | Signed metadata, asset verification and isolated engine channel |
+| MyPOI.html | Local form, office lookups and clipboard |
 
-The build concatenates these source sections in order inside a private closure. The engine takes input and lookup data through arguments and has no network, DOM or storage dependency. The HTML owns downloads, form and clipboard interactions. See [RULES.md](RULES.md) for the inherited interpretation assumptions.
-
-## Release workflow
-
-1. For each translation issue, reproduce it with a synthetic fixture and record the expected interpretation and supporting specification. Preserve delimiters, references and context that cause the issue.
-2. Edit the appropriate source section and add a regression in `tests/verify.cjs`. For a published engine change, set `ENGINE_FILE` in the HTML to a new versioned filename and keep old bundles available for old office copies.
-3. Run `node build.cjs`, `node build.cjs --check` and `node --test tests/verify.cjs` from this directory. Commit the updated source, tests, generated engine and HTML together. The build updates the HTML integrity value. Share the new single HTML when deploying an engine change.
-4. Validate in the managed office browser with the existing bookmarklet, office lookups and clipboard destination. Use the previous HTML to roll back. Public repository files and tests use synthetic examples.
-Lookup and template files are pinned to a Git revision in BASE. To release a change to those files, publish the assets first, then update BASE to that revision and repeat the output checks.
+Use [RULES.md](RULES.md) for interpretation details. Keep historical bundles available for existing local HTML copies and signed rollback.

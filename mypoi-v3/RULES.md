@@ -56,3 +56,9 @@ POI clipboard: exactly 29 single-line values in original order, followed by raw 
 Record the failing segment type, an anonymised input preserving delimiters, expected result, actual result, timezone/date and whether a lookup failed. Locate the corresponding `readTIF`, `readDOCS`, `readTVL`, `readRCI`, `readTBD`, `route` or timezone function in the single HTML. Add a failing regression case before changing that rule, cite the format section or sender-specific evidence, and rerun core and browser tests. Do not solve a parsing defect by rearranging the screen or introducing a cloud PNR upload.
 
 Known verification boundary: tests use published examples and synthetic records. No real workplace PNR samples or live internal service session were available. Support for arbitrary message histories, all airline extensions and all versions is not claimed. The workplace browser and actual sender variants still need an acceptance check.
+
+## TIF additional given names (Case #1)
+
+Read C324 primary given name/title (9942), then append the two optional Other names (9754) in source order when present. The infant indicator (9946) is a separate component. A later shorter check-in TIF for the same traveller reference retains the reservation name. Existing strict explicit-reference DOCS conflict checks still apply.
+
+Source: IATA PNRGOV EDIFACT MIG 21.1, section 5.27, printed page 58 (PDF page 64), https://www.iata.org/contentassets/18a5fdb2dc144d619a8c10dc1472ae80/pnrgov-edifact-implementation-guide_21_1.pdf#page=64

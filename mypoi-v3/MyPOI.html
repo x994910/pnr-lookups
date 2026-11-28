@@ -156,6 +156,7 @@ button:disabled { opacity:.55; cursor:wait; }
 <main class="container">
 <fieldset>
 <legend>PNR Push Data</legend>
+  <small id="engineStatus" role="status" aria-live="polite" style="display:block;margin-bottom:.4rem"></small>
 <textarea id="raw" placeholder="Paste PNR Push Data here, then press enter."></textarea>
 
 <div class="action-bar">
@@ -369,52 +370,258 @@ button:disabled { opacity:.55; cursor:wait; }
 <script>
 (() => {
   'use strict';
-  const BASE='https://raw.githubusercontent.com/x994910/pnr-lookups/437007e4b88f5a58889537d64583a5484952013a/mypoi-v3/';
-  const ENGINE_BASE='https://raw.githubusercontent.com/x994910/pnr-lookups/main/mypoi-v3/';
+// BEGIN RELEASE LOADER
+const RELEASE_ROOT = 'https://raw.githubusercontent.com/x994910/pnr-lookups/';
+const RELEASE_POINTER = RELEASE_ROOT + 'main/mypoi-v3/engine-release.json';
+const TRUSTED_SPKI = ''; // Provision only through the approved office distribution process.
+const LOADER_VERSION = 1;
+const ENGINE_API = 1;
+const MIN_SEQUENCE = 1;
+const MAX_LIFETIME = 7 * 86400 * 1000;
+const ASSETS = ['nationalities.json','airports.json','profile-codes.txt','poi-notes.txt',
+  'inter-cont.txt','email-subject.txt','interdiction-email.txt'];
+const utf8 = new TextDecoder('utf-8', {fatal:true});
+const fromBase64 = value => Uint8Array.from(atob(value), c => c.charCodeAt(0));
+const toBase64 = bytes => btoa(String.fromCharCode(...new Uint8Array(bytes)));
 
-  const ENGINE_FILE = 'pnr-engine-1.0.1.js';
-  const ENGINE_INTEGRITY = 'sha384-MRuunbjrbmaZYp7xMvAY20adrLVHEFacuXNG//uxR8Qesg9tIMAzyGWZAzvVbUAe';
-  let PNR;
-  let engineLoading;
-
-  function loadEngine() {
-    if (PNR) return Promise.resolve(PNR);
-    if (!engineLoading) engineLoading = downloadEngine().finally(() => { engineLoading = null; });
-    return engineLoading;
+async function verifyManifest(envelope, {spki, now, previous}) {
+  if (!globalThis.crypto?.subtle) throw Error('Browser cryptography unavailable.');
+  if (!spki) throw Error('Office verification key has not been provisioned.');
+  const key = await crypto.subtle.importKey('spki', fromBase64(spki),
+    {name:'ECDSA', namedCurve:'P-256'}, false, ['verify']);
+  const bytes = fromBase64(envelope.payload);
+  const valid = await crypto.subtle.verify({name:'ECDSA', hash:'SHA-256'}, key,
+    fromBase64(envelope.signature), bytes);
+  if (!valid) throw Error('Release signature verification failed.');
+  const m = JSON.parse(utf8.decode(bytes));
+  if (m.status !== 'approved' || m.schema !== 1 ||
+      !Number.isSafeInteger(m.sequence) || m.sequence < MIN_SEQUENCE ||
+      !/^\d+\.\d+\.\d+$/.test(m.version) || !/^[a-f0-9]{40}$/.test(m.commit) ||
+      m.engine !== 'pnr-engine-' + m.version + '.js') throw Error('Invalid approved release metadata.');
+  if (m.api !== ENGINE_API || !Number.isSafeInteger(m.minLoader) ||
+      m.minLoader < 1 || m.minLoader > LOADER_VERSION) throw Error('Engine incompatible.');
+  const issued = Date.parse(m.issued), expires = Date.parse(m.expires);
+  if (!(issued <= now && now < expires && expires - issued <= MAX_LIFETIME)) {
+    throw Error('Release expired or release dates are invalid.');
   }
-
-  async function downloadEngine() {
-    const response = await fetch(ENGINE_BASE + ENGINE_FILE, {
-      integrity: ENGINE_INTEGRITY,
-      credentials: 'omit',
-      referrerPolicy: 'no-referrer',
-      signal: AbortSignal.timeout(12000)
-    }).catch(() => { throw Error('Could not download or verify the MyPOI engine. Check GitHub access and press Analyse to retry.'); });
-    if (!response.ok) throw Error('MyPOI engine download failed (HTTP ' + response.status + '). Press Analyse to retry.');
-    const source = new Blob([await response.arrayBuffer()], {type: 'text/javascript'});
-    const url = URL.createObjectURL(source);
-    const script = document.createElement('script');
-    try {
-      await new Promise((resolve, reject) => {
-        script.onload = resolve;
-        script.onerror = () => reject(Error('The browser could not run the verified MyPOI engine.'));
-        script.src = url;
-        document.head.append(script);
-      });
-      const engine = globalThis.MyPOIEngine;
-      if (!engine || typeof engine.parse !== 'function' || typeof engine.derive !== 'function') {
-        throw Error('The downloaded MyPOI engine is incompatible.');
-      }
-      PNR = engine;
-      return PNR;
-    } finally {
-      script.remove();
-      URL.revokeObjectURL(url);
+  const fingerprint = toBase64(await crypto.subtle.digest('SHA-256', bytes));
+  if (previous && (m.sequence < previous.sequence ||
+      (m.sequence === previous.sequence && fingerprint !== previous.fingerprint))) {
+    throw Error('Release replay or sequence reuse detected.');
+  }
+  for (const name of [m.engine, ...ASSETS]) {
+    if (typeof m.hashes?.[name] !== 'string' || !/^[A-Za-z0-9+/]{64}$/.test(m.hashes[name])) {
+      throw Error('Missing or invalid asset hash: ' + name);
     }
   }
+  return {...m, fingerprint};
+}
+
+async function downloadBytes(url, maxBytes) {
+  const response = await fetch(url, {cache:'no-store', credentials:'omit', redirect:'error',
+    referrerPolicy:'no-referrer', signal:AbortSignal.timeout(12000)});
+  if (!response.ok) throw Error('Release download failed (HTTP ' + response.status + ').');
+  const reader = response.body.getReader();
+  const chunks = [];
+  let size = 0;
+  try {
+    for (;;) {
+      const {done, value} = await reader.read();
+      if (done) break;
+      size += value.length;
+      if (size > maxBytes) throw Error('Release download exceeds the size limit.');
+      chunks.push(value);
+    }
+  } finally {
+    await reader.cancel().catch(() => {});
+  }
+  const bytes = new Uint8Array(size);
+  let offset = 0;
+  for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.length; }
+  return bytes;
+}
+
+async function readVerifiedAsset(release, name) {
+  const bytes = await downloadBytes(RELEASE_ROOT + release.commit + '/mypoi-v3/' + name, 8 * 1024 * 1024);
+  if (toBase64(await crypto.subtle.digest('SHA-384', bytes)) !== release.hashes[name]) {
+    throw Error('Release file verification failed: ' + name);
+  }
+  return utf8.decode(bytes);
+}
+
+// This broker runs in an opaque-origin iframe. Only its blob worker executes the engine.
+function sandboxBroker(workerEntry) {
+  addEventListener('message', function init(event) {
+    if (event.source !== parent || event.data?.type !== 'myPoiInit' || !event.ports[0]) return;
+    removeEventListener('message', init);
+    const channel = event.ports[0];
+    const url = URL.createObjectURL(new Blob([event.data.source, '\n;(', workerEntry.toString(), ')();'],
+      {type:'text/javascript'}));
+    try {
+      const worker = new Worker(url);
+      worker.onmessage = e => channel.postMessage(e.data);
+      worker.onerror = () => channel.postMessage({fatal:true});
+      channel.onmessage = e => worker.postMessage(e.data);
+    } catch {
+      channel.postMessage({fatal:true});
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  });
+}
+
+function workerEntry() {
+  const engine = globalThis.MyPOIEngine;
+  if (!engine || !['parse','derive','pretty','dateParts','contacts','fillTemplate']
+      .every(name => typeof engine[name] === 'function')) throw Error('Invalid engine API');
+  addEventListener('message', ({data:{id, method, args}}) => {
+    try {
+      let result;
+      if (method === 'analyse') {
+        const [raw, context] = args;
+        const parsed = engine.parse(raw);
+        result = {warnings:parsed.warnings, bookings:parsed.bookings.map(book => ({
+          id:book.id, locator:book.locators[0]?.locator,
+          passengers:book.passengers.map(pax => ({
+            id:pax.id, surname:pax.surname, given:engine.pretty(pax.given), ref:pax.ref,
+            derived:engine.derive(book, pax, {...context, parseWarnings:parsed.warnings})
+          }))
+        }))};
+      } else if (method === 'email') {
+        const [templates, port, carrier, values] = args;
+        const record = engine.contacts(templates.contacts)[port + '|' + carrier];
+        if (!record?.to.length) result = null;
+        else {
+          const parts = engine.dateParts(values.dob, 'birth');
+          const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+          if (parts) values.dob = String(parts.d).padStart(2,'0') + '/' + months[parts.m-1] + '/' + parts.y;
+          values.al = record.name || carrier;
+          result = {to:record.to.join('; '), cc:record.cc.join('; '),
+            subject:engine.fillTemplate(templates.subject, values), body:engine.fillTemplate(templates.body, values)};
+        }
+      } else throw Error('Unsupported operation');
+      postMessage({id, result});
+    } catch {
+      postMessage({id, failed:true});
+    }
+  });
+  postMessage({ready:true});
+}
+
+function openEngine(source) {
+  const frame = document.createElement('iframe');
+  frame.hidden = true;
+  frame.setAttribute('sandbox', 'allow-scripts');
+  frame.srcdoc = '<meta http-equiv="Content-Security-Policy" content="' +
+    "default-src 'none'; script-src 'unsafe-inline'; worker-src blob:; connect-src 'none'; " +
+    "form-action 'none'; base-uri 'none'" + '"><script>(' +
+    sandboxBroker.toString() + ')(' + workerEntry.toString() + ');</scr' + 'ipt>';
+  const {port1, port2} = new MessageChannel();
+  const pending = new Map();
+  let nextId = 0, closed = false;
+  const close = () => {
+    closed = true;
+    frame.remove();
+    port1.close();
+    for (const reply of pending.values()) reply({failed:true});
+    pending.clear();
+  };
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => fail(), 10000);
+    function fail() {
+      clearTimeout(timeout);
+      close();
+      reject(Error('Engine isolation failed or was blocked by this browser.'));
+    }
+    port1.onmessage = ({data}) => {
+      if (data?.fatal) { fail(); return; }
+      if (data?.ready) {
+        clearTimeout(timeout);
+        resolve({close, call(method, ...args) {
+          if (closed) return Promise.reject(Error('Engine stopped. Reopen MyPOI to retry.'));
+          return new Promise((done, error) => {
+            const id = ++nextId;
+            const timer = setTimeout(() => close(), 10000);
+            pending.set(id, reply => {
+              clearTimeout(timer);
+              if (reply.failed) error(Error('Isolated engine could not complete the operation.'));
+              else done(reply.result);
+            });
+            try { port1.postMessage({id, method, args}); }
+            catch { close(); }
+          });
+        }});
+        return;
+      }
+      const reply = pending.get(data?.id);
+      if (reply) { pending.delete(data.id); reply(data); }
+    };
+    frame.addEventListener('load', () => {
+      frame.contentWindow.postMessage({type:'myPoiInit', source}, '*', [port2]);
+    }, {once:true});
+    document.body.append(frame);
+  });
+}
+
+let activeRelease, releaseLoading;
+let sessionHighWater;
+const STORAGE_KEY = 'MyPOI.signed-release.v1';
+function getHighWater() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if (stored && Number.isSafeInteger(stored.sequence) &&
+        stored.sequence >= (sessionHighWater?.sequence || 0)) return stored;
+  } catch { /* file URL storage can be disabled */ }
+  return sessionHighWater;
+}
+
+function loadRelease() {
+  if (activeRelease) {
+    if (Date.now() >= Date.parse(activeRelease.manifest.expires)) {
+      $('engineStatus').textContent = 'Engine approval expired. Reopen MyPOI to check for updates.';
+      return Promise.reject(Error($('engineStatus').textContent));
+    }
+    return Promise.resolve(activeRelease);
+  }
+  if (!releaseLoading) {
+    $('engineStatus').textContent = 'Checking for updates';
+    releaseLoading = (async () => {
+      if (!globalThis.crypto?.subtle) throw Error('Browser cryptography unavailable.');
+      if (!TRUSTED_SPKI) throw Error('Office verification key has not been provisioned.');
+      const envelope = JSON.parse(utf8.decode(await downloadBytes(RELEASE_POINTER, 32768)));
+      const now = Date.now();
+      const manifest = await verifyManifest(envelope, {spki:TRUSTED_SPKI, now, previous:getHighWater()});
+      sessionHighWater = {sequence:manifest.sequence, fingerprint:manifest.fingerprint};
+      let persisted = false;
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(sessionHighWater));
+        persisted = localStorage.getItem(STORAGE_KEY) === JSON.stringify(sessionHighWater);
+      } catch { /* report session-only replay tracking */ }
+      const names = [manifest.engine, ...ASSETS];
+      const files = Object.fromEntries(await Promise.all(names.map(async name =>
+        [name, await readVerifiedAsset(manifest, name)])));
+      configureLookups(files);
+      const engine = await openEngine(files[manifest.engine]);
+      try {
+        // Recheck expiry and sequence after downloads and worker startup.
+        await verifyManifest(envelope, {spki:TRUSTED_SPKI, now:Date.now(), previous:getHighWater()});
+      } catch (error) { engine.close(); throw error; }
+      activeRelease = {manifest, engine, files};
+      $('engineStatus').textContent = 'Engine ' + manifest.version + ' — Verified' +
+        (persisted ? '' : ' (release history available only in this session)') +
+        (manifest.rollback === true ? ' · Approved rollback' : '');
+      return activeRelease;
+    })().catch(error => {
+      $('engineStatus').textContent = 'Engine unavailable: ' + error.message;
+      throw error;
+    }).finally(() => { releaseLoading = null; });
+  }
+  return releaseLoading;
+}
+// END RELEASE LOADER
   const INTERNAL={ports:'http://cmsiboc/services/api/ports',users:'http://cmsiboc/services/api/lookups/getusers'};
   const $=id=>document.getElementById(id),value=id=>$(id).value.trim();
-  const state={parsed:null,pax:null,book:null,raw:'',generation:0,forms:new Map(),email:null,poiCopied:false,lookups:null,loading:null,ports:{},users:null,userLoading:null};
+  const state={parsed:null,pax:null,book:null,raw:'',generation:0,forms:new Map(),email:null,poiCopied:false,lookups:null,ports:{},users:null,userLoading:null};
   const FORM_IDS=['pdSurname','pdGiven','pdGender','pdDob','pdAms','pdNationality','pdPassport','pdInterdiction','tdOfficer','tdFlightNumber','tdPoiSource','tdPnrNumber','tdOriginPort','tdTransit1','tdTransit2','tdArrivalPort','tdProfile1','tdProfile2','tdArrivalDate','tdArrHour','tdArrMin','tdDepartureDate','tdDepHour','tdDepMin','tdAloInvolved','bdBookingDate','bdBaggageWeight','bdReturnDate','bdTravelAgency'];
   const getField=id=>id==='tdAloInvolved' ? document.querySelector('input[name="tdAloInvolved"]:checked')?.value || '' : $(id).value;
   const setField=(id,v)=>{if(id==='tdAloInvolved')document.querySelectorAll('input[name="tdAloInvolved"]').forEach(el=>el.checked=el.value===v);else $(id).value=v??'';};
@@ -433,32 +640,31 @@ button:disabled { opacity:.55; cursor:wait; }
   async function fetchText(url){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
     try{const response=await fetch(url,{cache:'no-store',signal:controller.signal,referrerPolicy:'no-referrer'});if(!response.ok)throw Error('HTTP '+response.status);return await response.text();}finally{clearTimeout(timer);}
   }
-  async function loadLookups(){if(state.lookups)return state.lookups;if(state.loading)return state.loading;
-    state.loading=(async()=>{notice('loadNotice','Loading reference files…');
-      const names=['nationalities.json','airports.json','profile-codes.txt'];
-      const results=await Promise.allSettled(names.map(name=>fetchText(BASE+name)));
-      const failed=results.flatMap((r,i)=>r.status==='rejected'?[names[i]]:[]);if(failed.length)throw Error('Cannot load '+failed.join(', ')+'. Connect to the network, then press Analyse to retry.');
+  function configureLookups(files){
+      const results=['nationalities.json','airports.json','profile-codes.txt'].map(name=>({value:files[name]}));
       const nat=JSON.parse(results[0].value),air=JSON.parse(results[1].value);
       if(nat.schemaVersion!==1||!Array.isArray(nat.options)||!nat.codes||!nat.aliases||air.schemaVersion!==1||!air.airports||!Array.isArray(air.nzCodes))throw Error('Reference file format is invalid.');
       const profiles=results[2].value.split(/\r?\n/).map(l=>{const i=l.indexOf('|');return i<1?null:{value:l.slice(0,i).trim(),text:l.slice(i+1).trim()};}).filter(Boolean);
       if(!profiles.length)throw Error('Profile codes are empty or invalid.');
       options('pdNationality',nat.options);options('tdProfile1',profiles);options('tdProfile2',profiles);
-      state.lookups={nat,air,profiles};notice('loadNotice','');return state.lookups;
-    })().catch(e=>{notice('loadNotice',e.message,true);throw e;}).finally(()=>state.loading=null);return state.loading;
+      state.lookups={nat,air,profiles};
   }
   async function loadPorts(){try{const data=JSON.parse(await fetchText(INTERNAL.ports));const list=Array.isArray(data)?data:data.ports||data.data||data.items||[];
     for(const p of list)if(p.Code&&p.Name)state.ports[String(p.Code).toUpperCase()]=String(p.Name);
   }catch(e){/* Internal service is optional enrichment; codes remain editable. No invented names. */}}
   function selectPassenger(id){if(state.pax)state.forms.set(state.pax.id,snapshot());
     const book=state.parsed.bookings.find(b=>b.passengers.some(p=>p.id===id)),pax=book?.passengers.find(p=>p.id===id);if(!pax)return;
-    state.book=book;state.pax=pax;invalidateCopy();const derived=PNR.derive(book,pax,{...state.lookups,ports:state.ports,parseWarnings:state.parsed.warnings});apply(state.forms.get(id)||derived.fields);notice('parseNotice',derived.warnings.join('\n'),true);
+    state.book=book;state.pax=pax;invalidateCopy();const derived=pax.derived;apply(state.forms.get(id)||derived.fields);notice('parseNotice',derived.warnings.join('\n'),true);
     ['personalBox','travelBox','bookingBox','poi'].forEach(id=>$(id).style.display=id==='poi'?'inline-block':'block');
   }
   async function analyse(){resetAnalysis();const generation=state.generation,raw=$('raw').value;if(!raw.trim())return;$('analyse').disabled=true;
-    try{await Promise.all([loadLookups(),loadEngine()]);if(generation!==state.generation)return;const parsed=PNR.parse(raw);state.raw=raw;state.parsed=parsed;
+    try{const release=await loadRelease();if(generation!==state.generation)return;
+      const {nat,air}=state.lookups;
+      const parsed=await release.engine.call('analyse',raw,{nat,air,ports:state.ports});
+      if(generation!==state.generation)return;state.raw=raw;state.parsed=parsed;
       const passengers=parsed.bookings.flatMap(b=>b.passengers);if(!passengers.length){notice('parseNotice','No supported passenger records found. Check the pasted PNR format.',true);return;}
       for(const p of passengers){const row=document.createElement('label');row.className='radio-item';const radio=document.createElement('input');radio.type='radio';radio.name='passenger';radio.value=p.id;radio.id='pax_'+p.id.replace(':','_');
-        const text=document.createElement('span'),book=parsed.bookings.find(b=>b.passengers.includes(p));text.textContent=p.surname.toUpperCase()+', '+PNR.pretty(p.given)+(passengers.filter(q=>q.surname===p.surname&&q.given===p.given).length>1?' (reference '+(p.ref||p.id)+')':'')+(parsed.bookings.length>1?' — '+(book.locators[0]?.locator||'booking '+(book.id+1)):'');row.append(radio,text);$('passengerList').append(row);
+        const text=document.createElement('span'),book=parsed.bookings.find(b=>b.passengers.includes(p));text.textContent=p.surname.toUpperCase()+', '+p.given+(passengers.filter(q=>q.surname===p.surname&&q.given===p.given).length>1?' (reference '+(p.ref||p.id)+')':'')+(parsed.bookings.length>1?' — '+(book.locators[0]?.locator||'booking '+(book.id+1)):'');row.append(radio,text);$('passengerList').append(row);
       }$('passengerBox').style.display='block';$('passengerList').querySelector('input').checked=true;selectPassenger(passengers[0].id);
     }catch(e){notice('parseNotice','Analysis unavailable: '+e.message,true);}finally{$('analyse').disabled=false;}
   }
@@ -469,25 +675,28 @@ button:disabled { opacity:.55; cursor:wait; }
   const fingerprint=()=>JSON.stringify([state.generation,snapshot()]);
   function isCurrent(){return !!state.pax&&$('raw').value===state.raw;}
   async function copyPOI(){if(!isCurrent())return;const stamp=fingerprint();$('poi').disabled=true;
-    try{const notes=await fetchText(BASE+'poi-notes.txt');if(!notes.trim())throw Error('POI notes template is empty.');if(stamp!==fingerprint()||!isCurrent())throw Error('Details changed; copy again.');
+    try{const notes=(await loadRelease()).files['poi-notes.txt'];if(!notes.trim())throw Error('POI notes template is empty.');if(stamp!==fingerprint()||!isCurrent())throw Error('Details changed; copy again.');
       const text=FORM_IDS.map(id=>oneLine(getField(id))).join('\n')+'\n'+state.raw.replace(/\r\n?/g,'\n').replace(/\n+$/,'')+'\n---NEXT---\n'+notes;
       const ok=await copy(text);if(stamp!==fingerprint())return;state.poiCopied=ok;$('interdiction').style.display=ok?'inline-block':'none';notice('poiStatus',ok?'Copied POI text':'Copy failed',!ok);
     }catch(e){notice('poiStatus',e.message,true);}finally{$('poi').disabled=false;}
   }
-  function emailValues(airline){const dob=value('pdDob'),parts=PNR.dateParts(dob,'birth');const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return {
-    al:airline,surname:value('pdSurname').toUpperCase(),given:value('pdGiven'),flightNo:value('tdFlightNumber').toUpperCase(),arrPort:value('tdArrivalPort'),arrDate:value('tdArrivalDate'),gender:value('pdGender'),dob:parts?String(parts.d).padStart(2,'0')+'/'+months[parts.m-1]+'/'+parts.y:dob,nat:value('pdNationality'),passNo:value('pdPassport'),pnr:value('tdPnrNumber')};}
+  function emailValues(){return {
+    surname:value('pdSurname').toUpperCase(),given:value('pdGiven'),flightNo:value('tdFlightNumber').toUpperCase(),arrPort:value('tdArrivalPort'),arrDate:value('tdArrivalDate'),gender:value('pdGender'),dob:value('pdDob'),nat:value('pdNationality'),passNo:value('pdPassport'),pnr:value('tdPnrNumber')};}
   async function prepareEmail(){if(!state.poiCopied||!isCurrent())return;const stamp=fingerprint();$('interdiction').disabled=true;invalidateEmail();
-    try{const [contacts,subject,body]=await Promise.all(['inter-cont.txt','email-subject.txt','interdiction-email.txt'].map(f=>fetchText(BASE+f)));
+    try{const release=await loadRelease();
+      const templates={contacts:release.files['inter-cont.txt'],subject:release.files['email-subject.txt'],body:release.files['interdiction-email.txt']};
       if(stamp!==fingerprint()||!state.poiCopied)throw Error('Details changed; copy POI again.');
       const portCode=value('pdInterdiction').toUpperCase().match(/^([A-Z]{3})\b/)?.[1]||'',carrier=value('tdFlightNumber').toUpperCase().match(/^([A-Z0-9]{2})(?=\d)/)?.[1]||'';
-      const record=PNR.contacts(contacts)[portCode+'|'+carrier];if(!record?.to.length)throw Error('No To address found for this port and airline.');
-      if(!subject.trim()||!body.trim())throw Error('An email template is empty.');
-      const values=emailValues(record.name||carrier);state.email={stamp,to:record.to.join('; '),cc:record.cc.join('; '),subject:PNR.fillTemplate(subject,values),body:PNR.fillTemplate(body,values)};
+      if(!templates.subject.trim()||!templates.body.trim())throw Error('An email template is empty.');
+      const email=await release.engine.call('email',templates,portCode,carrier,emailValues());
+      if(stamp!==fingerprint()||!state.poiCopied)throw Error('Details changed; copy POI again.');
+      if(!email)throw Error('No To address found for this port and airline.');
+      state.email={stamp,...email};
       $('toField').value=state.email.to;$('ccField').value=state.email.cc;$('ccRow').style.display=state.email.cc?'grid':'none';
       $('interdictionEmailHeader').textContent='E-mail prepared for '+value('tdFlightNumber')+' at '+value('pdInterdiction')+' — not sent';$('interdictionEmailBox').style.display='block';notice('emailStatus','Interdiction e-mail ready');
     }catch(e){notice('poiStatus',e.message,true);}finally{$('interdiction').disabled=false;}
   }
-  async function copyEmail(key){if(!state.email||state.email.stamp!==fingerprint()){invalidateEmail();return;}const ok=await copy(state.email[key]);notice('emailStatus',ok?'Copied '+({to:'To addresses',cc:'CC addresses',subject:'Subject',body:'e-mail body'}[key]):'Copy failed',!ok);}
+  async function copyEmail(key){try{await loadRelease();}catch(e){notice('emailStatus',e.message,true);return;}if(!state.email||state.email.stamp!==fingerprint()){invalidateEmail();return;}const ok=await copy(state.email[key]);notice('emailStatus',ok?'Copied '+({to:'To addresses',cc:'CC addresses',subject:'Subject',body:'e-mail body'}[key]):'Copy failed',!ok);}
   let officerTimer;
   async function officers(){if(state.users)return state.users;if(state.userLoading)return state.userLoading;
     state.userLoading=(async()=>{const data=JSON.parse(await fetchText(INTERNAL.users));state.users=[...new Set((Array.isArray(data)?data:data.users||data.data||data.items||[]).map(p=>p.Name||p.DisplayName||p.FullName||p.UserName).filter(Boolean))].sort();return state.users;})().finally(()=>state.userLoading=null);return state.userLoading;
@@ -503,7 +712,7 @@ button:disabled { opacity:.55; cursor:wait; }
   for(const id of ['poi','interdiction']){const el=$(id);el.addEventListener('mouseenter',()=>el.classList.add('tip-on'));el.addEventListener('mouseleave',()=>el.classList.remove('tip-on'));el.addEventListener('mousemove',e=>{el.style.setProperty('--tip-x',e.offsetX+'px');el.style.setProperty('--tip-y',e.offsetY+'px');});}
   // Label existing fields for assistive technology without altering their visual layout.
   document.querySelectorAll('.field').forEach((field,i)=>{const label=field.querySelector('.label');if(!label)return;label.id='field_label_'+i;field.querySelectorAll('input,select').forEach(el=>el.setAttribute('aria-labelledby',label.id));});
-  indicators();loadLookups().catch(()=>{});loadPorts();
+  indicators();loadRelease().catch(()=>{});loadPorts();
 })();
 
 </script>

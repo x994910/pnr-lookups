@@ -21,7 +21,7 @@
   const sameName = (a,b) => nameKey(a) === nameKey(b);
   function readTIF(s) {
     if (s.c[0]?.[1] === 'G') return [];
-    return s.c.slice(1).filter(c => c[0]).map(c => ({surname:s.c[0]?.[0] || '', given:stripTitle(c[0],true), ref:c[2] || '', type:c[1] || '', docs:[], warnings:[], index:s.index}));
+    return s.c.slice(1).filter(c => c[0]).map(c => ({surname:s.c[0]?.[0] || '', given:[stripTitle(c[0], true), clean(c[4]), clean(c[5])].filter(Boolean).join(' '), ref:c[2] || '', type:c[1] || '', docs:[], warnings:[], index:s.index}));
   }
   function readDOCS(s, year) {
     if (s.c[0]?.[0] !== 'DOCS') return null;

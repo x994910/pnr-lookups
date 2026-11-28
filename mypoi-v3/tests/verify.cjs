@@ -1,6 +1,5 @@
 const fs=require('fs'),vm=require('vm'),assert=require('node:assert/strict'),test=require('node:test');
-const html=fs.readFileSync(__dirname+'/../MyPOI.html','utf8');
-const bundle=html.match(/const ENGINE_FILE = '([^']+)'/)[1];
+const bundle=process.env.MYPOI_TEST_BUNDLE || 'pnr-engine-1.0.2.js';
 const context={Intl,Date};vm.createContext(context);vm.runInContext(fs.readFileSync(__dirname+'/../'+bundle,'utf8'),context);const P=context.MyPOIEngine;
 const air=JSON.parse(fs.readFileSync(__dirname+'/../airports.json','utf8'));
 const parse=s=>P.parse(s,2026),first=s=>parse(s).bookings[0];
@@ -90,4 +89,32 @@ testCase('Baggage from a different flight is excluded even for one traveller',()
   const book=first(tif+tvl+"TIF+TESTER+ALICE:A:1'TBD++1:12:700'TVL+171126:1500:171126:1610+AKL+WLG+NZ+4:Y'");
   assert.match(P.baggage(book,book.passengers[0],book.flights[0]),/12 kg/);
   assert.equal(P.baggage(book,book.passengers[0],book.flights[1]),'');
+});
+
+testCase('Additional C324 names are joined in order with primary title removed',()=>{
+  const p=P.readTIF(P.tokenize("TIF+TESTER:I+ALICEMS:A:1::JANE:MARIE'")[0])[0];
+  assert.equal(p.given,'ALICE JANE MARIE');
+});
+testCase('Single given name and infant type keep their existing interpretation',()=>{
+  const p=P.readTIF(P.tokenize("TIF+TESTER:I+ALICE:IN:1'")[0])[0];
+  assert.equal(p.given,'ALICE');
+  assert.equal(p.type,'IN');
+});
+testCase('Additional names allow strict documents to match distinct references',()=>{
+  const names="TIF+TESTER:I+ALICE:A:1::JANE:MARIE+BOB:A:2::LEE'";
+  const alice=docs.replace('TESTER/ALICE','TESTER/ALICE JANE MARIE');
+  const bob=docs.replace('TEST0001','TEST0002').replace('TESTER/ALICE','TESTER/BOB LEE').replace('+::1','+::2');
+  const book=first(names+alice+bob+tvl+"TIF+TESTER:I+ALICE:A:1'");
+  assert.equal(book.passengers.length,2);
+  assert.equal(book.passengers[0].given,'ALICE JANE MARIE');
+  assert.equal(book.passengers[0].details.docNo,'TEST0001');
+  assert.equal(book.passengers[1].details.docNo,'TEST0002');
+});
+testCase('Additional names do not permit contradictory document surnames or given names',()=>{
+  const names="TIF+TESTER:I+ALICE:A:1::JANE'";
+  for(const identity of ['OTHER/ALICE JANE','TESTER/ALICE JACK']){
+    const book=first(names+docs.replace('TESTER/ALICE',identity));
+    assert.equal(book.passengers[0].details.docNo,undefined);
+    assert.match(book.warnings[0],/conflicts/);
+  }
 });

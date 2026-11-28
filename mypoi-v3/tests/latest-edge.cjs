@@ -15,23 +15,20 @@ const sample="TIF+TESTER:I+ALICE MS:A:1'TIF+OTHER:I+BOB:A:2'SSR+DOCS:HK:1:NZ::::
 
 let signedRelease, files={}, browserTraffic=[];
 const candidate=path.join(root,'mypoi-v3');
-const {generateKeyPairSync,sign,createHash}=require('node:crypto');
+const {createHash}=require('node:crypto');
 const http=require('node:http');
-const keys=generateKeyPairSync('ec',{namedCurve:'prime256v1'});
-const spki=keys.publicKey.export({type:'spki',format:'der'}).toString('base64');
-const candidatePath=path.join(temp,'signed-mypoi-browser-demo.html');
-const scratch=fs.readFileSync(path.join(candidate,'MyPOI.html'),'utf8').replace("const TRUSTED_SPKI = '';", "const TRUSTED_SPKI = '"+spki+"';");
-fs.writeFileSync(candidatePath,scratch);
+const candidatePath=path.join(temp,'latest-mypoi-browser-demo.html');
+fs.copyFileSync(path.join(candidate,'MyPOI.html'),candidatePath);
 const assetNames=['nationalities.json','airports.json','profile-codes.txt','poi-notes.txt','inter-cont.txt','email-subject.txt','interdiction-email.txt'];
 for(const name of assetNames) files[name]=fs.readFileSync(path.join(candidate,name));
 files['inter-cont.txt']=Buffer.from('SIN,NZ,Air New Zealand,sample@example.invalid,copy@example.invalid');
 const server=http.createServer((req,res)=>{
   browserTraffic.push(req.url);
   res.setHeader('Access-Control-Allow-Origin','*');
-  const item=req.url==='/engine-release.json'?signedRelease:files[req.url.slice(1)];
+  const item=req.url==='/engine-latest.json'?signedRelease:files[req.url.slice(1)];
   res.statusCode=item?200:404;res.end(item);
 });
-const buildPointer=(version,sequence,probe)=>{
+const buildPointer=(version,probe)=>{
   const engine='pnr-engine-'+version+'.js';
   files[engine]=fs.readFileSync(path.join(candidate,engine));
   if(probe){
@@ -41,16 +38,13 @@ const buildPointer=(version,sequence,probe)=>{
       'const oldParse=globalThis.MyPOIEngine.parse; globalThis.MyPOIEngine.parse=(...args)=>{const p=oldParse(...args);p.warnings.push(probeResult||"probe pending",typeof document === "undefined" && typeof navigator.clipboard === "undefined" ? "probe: DOM and clipboard unavailable":"probe: unexpected access"); return p;};'
     )]);
   }
-  const manifest={schema:1,api:1,minLoader:1,status:'approved',commit:'a'.repeat(40),version,engine,sequence,
-    issued:new Date(Date.now()-1000).toISOString(),expires:new Date(Date.now()+3600000).toISOString(),
+  const manifest={schema:1,api:1,minLoader:1,status:'approved',commit:'a'.repeat(40),version,engine,
     hashes:Object.fromEntries([engine,...assetNames].map(name=>[name,createHash('sha384').update(files[name]).digest('base64')]))};
-  const bytes=Buffer.from(JSON.stringify(manifest));
-  signedRelease=JSON.stringify({payload:bytes.toString('base64'),
-    signature:sign('sha256',bytes,{key:keys.privateKey,dsaEncoding:'ieee-p1363'}).toString('base64')});
+  signedRelease=JSON.stringify(manifest);
 };
 
 async function main(){
-await new Promise(r=>server.listen(0,"127.0.0.1",r));buildPointer("1.0.2",1,false);
+await new Promise(r=>server.listen(0,"127.0.0.1",r));buildPointer("1.0.2",false);
 const port=await until(()=>{try{return fs.readFileSync(path.join(profile,'DevToolsActivePort'),'utf8').split(/\r?\n/)[0];}catch{return null;}});
 const tabs=await (await fetch('http://127.0.0.1:'+port+'/json/list')).json();
 const socket=new WebSocket(tabs.find(t=>t.type==='page').webSocketDebuggerUrl);
@@ -67,7 +61,7 @@ await cmd('Page.addScriptToEvaluateOnNewDocument',{source:`(()=>{
   window.fetch=(url,options)=>{
     if(url.includes('/getusers'))return Promise.resolve(new Response(JSON.stringify([{Name:'Sam Example'}])));
     if(url.includes('/api/ports'))return Promise.resolve(new Response(JSON.stringify([{Code:'SIN',Name:'Singapore'},{Code:'AKL',Name:'Auckland'}])));
-    if(location.href.includes('signed-mypoi-browser-demo') && url.startsWith('https://raw.githubusercontent.com/'))return actual('http://127.0.0.1:'+${server.address().port}+'/'+url.split('/').pop(),options);
+    if(location.href.includes('latest-mypoi-browser-demo') && url.startsWith('https://raw.githubusercontent.com/'))return actual('http://127.0.0.1:'+${server.address().port}+'/'+url.split('/').pop(),options);
     if(url.endsWith('inter-cont.txt'))return Promise.resolve(new Response('SIN,NZ,Air New Zealand,sample@example.invalid,copy@example.invalid'));
     if(url.includes('pnr-engine-')){window.engineCalls++;if(window.rejectEngine){const hash=options.integrity;options={...options,integrity:hash.slice(0,-1)+(hash.at(-1)==='A'?'B':'A')};}}
     return actual(url,options);
@@ -77,8 +71,8 @@ await cmd('Page.addScriptToEvaluateOnNewDocument',{source:`(()=>{
 const outputs=[];
 for(const version of [2,3]){
   await cmd('Page.navigate',{url:pathToFileURL(version===2?path.join(root,'mypoi-v2','MyPOI.html'):candidatePath).href});
-  await until(()=>ev("location.href.includes('"+(version===2?'mypoi-v2':'signed-mypoi-browser-demo')+"') && !!document.getElementById('analyse')"));
-  if(version===3) await until(()=>ev("document.getElementById('engineStatus').textContent.includes('1.0.2 — Verified')"));
+  await until(()=>ev("location.href.includes('"+(version===2?'mypoi-v2':'latest-mypoi-browser-demo')+"') && !!document.getElementById('analyse')"));
+  if(version===3) await until(()=>ev("document.getElementById('engineStatus').textContent.includes('1.0.2 — Loaded from GitHub')"));
   await ev("document.getElementById('raw').value="+JSON.stringify(sample));
   await ev("document.getElementById('analyse').click()");
   try{await until(()=>ev("document.getElementById('pdSurname').value==='TESTER'"));}catch(e){throw Error(await ev("document.getElementById('parseNotice').textContent"));}
@@ -102,19 +96,20 @@ if (process.env.MYPOI_SCREENSHOT) {
   const shot=await cmd('Page.captureScreenshot',{format:'png',captureBeyondViewport:true});
   fs.writeFileSync(process.env.MYPOI_SCREENSHOT,Buffer.from(shot.data,'base64'));
 }
-assert.equal(browserTraffic.filter(u=>u==='/engine-release.json').length,1);
-buildPointer('1.0.1',2,true);
+assert.equal(browserTraffic.filter(u=>u==='/engine-latest.json').length,1);
+buildPointer('1.0.1',true);
 await cmd('Page.reload',{ignoreCache:true});
-await until(()=>ev("document.getElementById('engineStatus')?.textContent.includes('1.0.1 — Verified')"));
+await until(()=>ev("document.getElementById('engineStatus')?.textContent.includes('1.0.1 — Loaded from GitHub')"));
 await ev("document.getElementById('raw').value="+JSON.stringify(sample)+";document.getElementById('analyse').click()");
 await until(()=>ev("document.getElementById('parseNotice').textContent.includes('probe: fetch blocked')"));
 assert.ok(await ev("document.getElementById('parseNotice').textContent.includes('probe: DOM and clipboard unavailable')"));
 assert.ok(!browserTraffic.includes('/probe'));
-buildPointer('1.0.2',1,false);
+buildPointer('1.0.2',false);
+files['pnr-engine-1.0.2.js']=Buffer.from('modified');
 await cmd('Page.reload',{ignoreCache:true});
-await until(()=>ev("document.getElementById('engineStatus')?.textContent.includes('replay')"));
+await until(()=>ev("document.getElementById('engineStatus')?.textContent.includes('file verification failed')"));
 assert.ok(requests.filter(r=>/^https?:/.test(r.url)).every(r=>r.method==='GET'&&!r.postData&&!r.url.includes('DEMO01')));
-console.log('Edge file:// passed: signed load, browser restart update, replay rejection, worker fetch blocked, no DOM/clipboard, 29-field parity, passenger selection/manual edits and all five copy payloads.');
+console.log('Edge file:// passed: GitHub manifest load, update after reopening, corrupt bundle rejection, worker fetch blocked, no DOM/clipboard, 29-field parity, passenger selection/manual edits and all five copy payloads.');
 socket.close();
 
 }

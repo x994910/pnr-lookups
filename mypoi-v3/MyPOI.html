@@ -372,49 +372,27 @@ button:disabled { opacity:.55; cursor:wait; }
   'use strict';
 // BEGIN RELEASE LOADER
 const RELEASE_ROOT = 'https://raw.githubusercontent.com/x994910/pnr-lookups/';
-const RELEASE_POINTER = RELEASE_ROOT + 'main/mypoi-v3/engine-release.json';
-const TRUSTED_SPKI = ''; // Provision only through the approved office distribution process.
+const RELEASE_POINTER = RELEASE_ROOT + 'mypoi-v3-latest/mypoi-v3/engine-latest.json';
 const LOADER_VERSION = 1;
 const ENGINE_API = 1;
-const MIN_SEQUENCE = 1;
-const MAX_LIFETIME = 7 * 86400 * 1000;
 const ASSETS = ['nationalities.json','airports.json','profile-codes.txt','poi-notes.txt',
   'inter-cont.txt','email-subject.txt','interdiction-email.txt'];
 const utf8 = new TextDecoder('utf-8', {fatal:true});
-const fromBase64 = value => Uint8Array.from(atob(value), c => c.charCodeAt(0));
 const toBase64 = bytes => btoa(String.fromCharCode(...new Uint8Array(bytes)));
 
-async function verifyManifest(envelope, {spki, now, previous}) {
+function validateManifest(m) {
   if (!globalThis.crypto?.subtle) throw Error('Browser cryptography unavailable.');
-  if (!spki) throw Error('Office verification key has not been provisioned.');
-  const key = await crypto.subtle.importKey('spki', fromBase64(spki),
-    {name:'ECDSA', namedCurve:'P-256'}, false, ['verify']);
-  const bytes = fromBase64(envelope.payload);
-  const valid = await crypto.subtle.verify({name:'ECDSA', hash:'SHA-256'}, key,
-    fromBase64(envelope.signature), bytes);
-  if (!valid) throw Error('Release signature verification failed.');
-  const m = JSON.parse(utf8.decode(bytes));
   if (m.status !== 'approved' || m.schema !== 1 ||
-      !Number.isSafeInteger(m.sequence) || m.sequence < MIN_SEQUENCE ||
       !/^\d+\.\d+\.\d+$/.test(m.version) || !/^[a-f0-9]{40}$/.test(m.commit) ||
-      m.engine !== 'pnr-engine-' + m.version + '.js') throw Error('Invalid approved release metadata.');
+      m.engine !== 'pnr-engine-' + m.version + '.js') throw Error('Invalid GitHub release metadata.');
   if (m.api !== ENGINE_API || !Number.isSafeInteger(m.minLoader) ||
       m.minLoader < 1 || m.minLoader > LOADER_VERSION) throw Error('Engine incompatible.');
-  const issued = Date.parse(m.issued), expires = Date.parse(m.expires);
-  if (!(issued <= now && now < expires && expires - issued <= MAX_LIFETIME)) {
-    throw Error('Release expired or release dates are invalid.');
-  }
-  const fingerprint = toBase64(await crypto.subtle.digest('SHA-256', bytes));
-  if (previous && (m.sequence < previous.sequence ||
-      (m.sequence === previous.sequence && fingerprint !== previous.fingerprint))) {
-    throw Error('Release replay or sequence reuse detected.');
-  }
   for (const name of [m.engine, ...ASSETS]) {
     if (typeof m.hashes?.[name] !== 'string' || !/^[A-Za-z0-9+/]{64}$/.test(m.hashes[name])) {
       throw Error('Missing or invalid asset hash: ' + name);
     }
   }
-  return {...m, fingerprint};
+  return m;
 }
 
 async function downloadBytes(url, maxBytes) {
@@ -564,52 +542,20 @@ function openEngine(source) {
 }
 
 let activeRelease, releaseLoading;
-let sessionHighWater;
-const STORAGE_KEY = 'MyPOI.signed-release.v1';
-function getHighWater() {
-  try {
-    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    if (stored && Number.isSafeInteger(stored.sequence) &&
-        stored.sequence >= (sessionHighWater?.sequence || 0)) return stored;
-  } catch { /* file URL storage can be disabled */ }
-  return sessionHighWater;
-}
-
 function loadRelease() {
-  if (activeRelease) {
-    if (Date.now() >= Date.parse(activeRelease.manifest.expires)) {
-      $('engineStatus').textContent = 'Engine approval expired. Reopen MyPOI to check for updates.';
-      return Promise.reject(Error($('engineStatus').textContent));
-    }
-    return Promise.resolve(activeRelease);
-  }
+  if (activeRelease) return Promise.resolve(activeRelease);
   if (!releaseLoading) {
     $('engineStatus').textContent = 'Checking for updates';
     releaseLoading = (async () => {
       if (!globalThis.crypto?.subtle) throw Error('Browser cryptography unavailable.');
-      if (!TRUSTED_SPKI) throw Error('Office verification key has not been provisioned.');
-      const envelope = JSON.parse(utf8.decode(await downloadBytes(RELEASE_POINTER, 32768)));
-      const now = Date.now();
-      const manifest = await verifyManifest(envelope, {spki:TRUSTED_SPKI, now, previous:getHighWater()});
-      sessionHighWater = {sequence:manifest.sequence, fingerprint:manifest.fingerprint};
-      let persisted = false;
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(sessionHighWater));
-        persisted = localStorage.getItem(STORAGE_KEY) === JSON.stringify(sessionHighWater);
-      } catch { /* report session-only replay tracking */ }
+      const manifest = validateManifest(JSON.parse(utf8.decode(await downloadBytes(RELEASE_POINTER, 32768))));
       const names = [manifest.engine, ...ASSETS];
       const files = Object.fromEntries(await Promise.all(names.map(async name =>
         [name, await readVerifiedAsset(manifest, name)])));
       configureLookups(files);
       const engine = await openEngine(files[manifest.engine]);
-      try {
-        // Recheck expiry and sequence after downloads and worker startup.
-        await verifyManifest(envelope, {spki:TRUSTED_SPKI, now:Date.now(), previous:getHighWater()});
-      } catch (error) { engine.close(); throw error; }
       activeRelease = {manifest, engine, files};
-      $('engineStatus').textContent = 'Engine ' + manifest.version + ' — Verified' +
-        (persisted ? '' : ' (release history available only in this session)') +
-        (manifest.rollback === true ? ' · Approved rollback' : '');
+      $('engineStatus').textContent = 'Engine ' + manifest.version + ' — Loaded from GitHub';
       return activeRelease;
     })().catch(error => {
       $('engineStatus').textContent = 'Engine unavailable: ' + error.message;
